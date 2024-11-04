@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable; // Cambia Model a Authenticatable
+use Laravel\Sanctum\HasApiTokens;
 
-class User extends Model
+class User extends Authenticatable // Cambia Model a Authenticatable
 {
-    use HasFactory;
+    use HasFactory, HasApiTokens; // Añade HasApiTokens
 
     protected $table = 'user';
     protected $primaryKey = 'user_id';
@@ -18,4 +19,7 @@ class User extends Model
     {
         return $this->belongsTo(Store::class, 'store_id');
     }
+
+    // Opcional: ocultar el campo de contraseña
+    protected $hidden = ['password'];
 }
