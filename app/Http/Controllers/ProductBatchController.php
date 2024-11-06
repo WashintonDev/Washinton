@@ -9,12 +9,14 @@ class ProductBatchController extends Controller
 {
     public function index()
     {
-        return ProductBatch::with('product')->get();
+        $productBatches = ProductBatch::with(['product', 'batch'])->get();
+        return response()->json($productBatches);
     }
 
     public function store(Request $request)
     {
         $validatedData = $request->validate([
+            'batch_id' => 'required|exists:batches,batch_id',
             'product_id' => 'required|exists:product,product_id',
             'quantity' => 'required|integer',
             'received_date' => 'required|date',
@@ -22,36 +24,8 @@ class ProductBatchController extends Controller
             'status' => 'required|string|max:10'
         ]);
 
-        return ProductBatch::create($validatedData);
-    }
+        $productBatch = ProductBatch::create($validatedData);
 
-    public function show($id)
-    {
-        return ProductBatch::with('product')->findOrFail($id);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $batch = ProductBatch::findOrFail($id);
-
-        $validatedData = $request->validate([
-            'product_id' => 'required|exists:product,product_id',
-            'quantity' => 'required|integer',
-            'received_date' => 'required|date',
-            'expiration_date' => 'nullable|date',
-            'status' => 'required|string|max:10'
-        ]);
-
-        $batch->update($validatedData);
-
-        return $batch;
-    }
-
-    public function destroy($id)
-    {
-        $batch = ProductBatch::findOrFail($id);
-        $batch->delete();
-
-        return response()->json(['message' => 'Product batch deleted successfully']);
+        return response()->json($productBatch, 201);
     }
 }

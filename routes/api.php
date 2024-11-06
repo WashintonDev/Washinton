@@ -16,6 +16,7 @@ use App\Http\Controllers\WarehouseTransferController;
 use App\Http\Controllers\WarehouseTransferDetailController;
 use App\Http\Controllers\RestockRequestController;
 use App\Http\Controllers\RestockRequestDetailController;
+use App\Http\Controllers\BatchController;
 
 Route::apiResource('category', CategoryController::class);
 Route::apiResource('supplier', SupplierController::class);
@@ -24,7 +25,8 @@ Route::apiResource('warehouse', WarehouseController::class);
 Route::apiResource('store', StoreController::class);
 Route::apiResource('user', UserController::class);
 Route::apiResource('inventory', InventoryController::class);
-Route::apiResource('product_batch', ProductBatchController::class);
+Route::resource('batches', BatchController::class);
+Route::resource('product_batches', ProductBatchController::class);
 Route::apiResource('product_supplier', ProductSupplierController::class);
 Route::apiResource('sale', SaleController::class);
 Route::apiResource('sale_detail', SaleDetailController::class);
