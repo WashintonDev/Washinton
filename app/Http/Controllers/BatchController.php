@@ -27,18 +27,21 @@ class BatchController extends Controller
     }
 
     // Crear un nuevo lote
-    public function store(Request $request)
-    {
-        $validatedData = $request->validate([
-            'batch_name' => 'required|string|max:100',
-            'status' => 'required|string|max:20', // Nueva validación para el status
-            'requested_at' => 'nullable|date', // Nueva validación para la fecha solicitada
-        ]);
+// Crear un nuevo lote
+public function store(Request $request)
+{
+    $validatedData = $request->validate([
+        'code' => 'required|string|size:10', // Asegúrate de que el código tenga el tamaño correcto
+        'batch_name' => 'required|string|max:100',
+        'status' => 'required|string|max:20',
+        'requested_at' => 'nullable|date',
+    ]);
 
-        $batch = Batch::create($validatedData);
+    $batch = Batch::create($validatedData);
 
-        return response()->json($batch, 201);
-    }
+    return response()->json($batch, 201);
+}
+
 
     // Actualizar un lote específico por su ID
     public function update(Request $request, $id)

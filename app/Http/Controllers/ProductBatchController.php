@@ -26,9 +26,9 @@ class ProductBatchController extends Controller
         return response()->json($productBatch);
     }
 
-    // Crear un nuevo lote de producto
-    public function store(Request $request)
-    {
+public function store(Request $request)
+{
+    try {
         $validatedData = $request->validate([
             'batch_id' => 'required|exists:batch,batch_id',
             'product_id' => 'required|exists:product,product_id',
@@ -38,9 +38,14 @@ class ProductBatchController extends Controller
         ]);
 
         $productBatch = ProductBatch::create($validatedData);
+        $productBatch->load(['product', 'batch']);
 
         return response()->json($productBatch, 201);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
     }
+}
+
 
     // Eliminar un lote de producto específico
     public function destroy($id)
