@@ -9,7 +9,7 @@ class ProductBatch extends Model
 {
     use HasFactory;
 
-    protected $table = 'product_batches';
+    protected $table = 'product_batch';
     protected $primaryKey = 'product_batch_id';
     protected $fillable = ['batch_id', 'product_id', 'quantity', 'received_date', 'expiration_date', 'status'];
 
