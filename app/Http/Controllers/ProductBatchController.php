@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\ProductBatch;
@@ -32,7 +33,6 @@ class ProductBatchController extends Controller
             'batch_id' => 'required|exists:batch,batch_id',
             'product_id' => 'required|exists:product,product_id',
             'quantity' => 'required|integer',
-            'received_date' => 'required|date',
             'expiration_date' => 'nullable|date',
             'status' => 'required|string|max:10'
         ]);

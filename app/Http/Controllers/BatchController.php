@@ -31,6 +31,8 @@ class BatchController extends Controller
     {
         $validatedData = $request->validate([
             'batch_name' => 'required|string|max:100',
+            'status' => 'required|string|max:20', // Nueva validación para el status
+            'requested_at' => 'nullable|date', // Nueva validación para la fecha solicitada
         ]);
 
         $batch = Batch::create($validatedData);
@@ -43,6 +45,8 @@ class BatchController extends Controller
     {
         $validatedData = $request->validate([
             'batch_name' => 'required|string|max:100',
+            'status' => 'required|string|max:20', // Nueva validación para el status
+            'requested_at' => 'nullable|date', // Nueva validación para la fecha solicitada
         ]);
 
         $batch = Batch::find($id);

@@ -9,17 +9,19 @@ class ProductBatch extends Model
 {
     use HasFactory;
 
-    protected $table = 'product_batch';
-    protected $primaryKey = 'product_batch_id';
-    protected $fillable = ['batch_id', 'product_id', 'quantity', 'received_date', 'expiration_date', 'status'];
+    protected $table = 'product_batch'; // Nombre de la tabla
+    protected $primaryKey = 'product_batch_id'; // Clave primaria
+    protected $fillable = ['batch_id', 'product_id', 'quantity', 'expiration_date', 'status']; // Campos que se pueden llenar en masa
 
+    // Método para la relación con el producto
     public function product()
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        return $this->belongsTo(Product::class, 'product_id'); // Relación con Product
     }
 
+    // Método para la relación con el lote
     public function batch()
     {
-        return $this->belongsTo(Batch::class, 'batch_id');
+        return $this->belongsTo(Batch::class, 'batch_id'); // Relación con Batch
     }
 }
