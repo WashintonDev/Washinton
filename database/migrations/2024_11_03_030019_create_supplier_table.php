@@ -15,6 +15,8 @@ class CreateSupplierTable extends Migration
             $table->string('email', 120);
             $table->char('phone', 10);
             $table->string('status', 10)->default('active');
+            $table->string('contract', 255)->nullable();
+            $table->date('contract_expiration_date')->nullable();
             $table->timestamps();
         });
     }
