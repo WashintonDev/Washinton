@@ -35,4 +35,4 @@ Route::apiResource('warehouse_transfer_detail', WarehouseTransferDetailControlle
 Route::apiResource('restock_request', RestockRequestController::class);
 Route::apiResource('restock_request_detail', RestockRequestDetailController::class);
 Route::post('/batch/update-status', [BatchController::class, 'updateStatus']);
-
+Route::get('/supplier/{supplier_id}/deliveries', [ProductBatchController::class, 'getSupplierDeliveries']);

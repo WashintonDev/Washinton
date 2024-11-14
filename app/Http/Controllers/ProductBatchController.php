@@ -60,4 +60,18 @@ public function store(Request $request)
 
         return response()->json(['message' => 'Product batch deleted successfully'], 200);
     }
+
+    public function getSupplierDeliveries($supplier_id)
+    {
+        $deliveries = ProductBatch::with(['product', 'batch'])
+            ->whereHas('product', function ($query) use ($supplier_id) {
+                $query->where('supplier_id', $supplier_id);
+            })
+            ->whereHas('batch', function ($query) {
+                $query->where('status', 'received');
+            })
+            ->get();
+
+        return response()->json($deliveries);
+    }
 }
