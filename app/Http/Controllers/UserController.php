@@ -11,26 +11,28 @@ class UserController extends Controller
     {
         return User::all();
     }
-
     public function store(Request $request)
     {
+        try{
         $validatedData = $request->validate([
             'first_name' => 'nullable|string|max:50',
             'last_name' => 'nullable|string|max:50',
-            'username' => 'required|string|max:30|unique:user',
             'email' => 'nullable|string|email|max:120|unique:user',
             'password' => 'required|string',
             'phone' => 'nullable|string|size:10',
             'role' => 'required|string|max:30',
             'location_type' => 'required|string|max:20',
             'status' => 'required|string|max:10',
-            'store_id' => 'nullable|exists:store,store_id'
+            'store_id' => 'nullable|exists:store,store_id',
+            'firebase_user_ID' => 'required|string|max:30'
         ]);
 
         $user = User::create($validatedData);
-
-        return response()->json($user, 201);
+        return response()->json($user, 200);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
     }
+}
 
     public function show($id)
     {
