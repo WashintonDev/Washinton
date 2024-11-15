@@ -6,6 +6,8 @@ use App\Models\Batch;
 use App\Models\ProductBatch; // Asegúrate de incluir el modelo ProductBatch
 use App\Models\Inventory; // Asegúrate de incluir el modelo Inventory
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class BatchController extends Controller
 {
@@ -113,4 +115,32 @@ class BatchController extends Controller
 
         return response()->json(['message' => 'Batch status updated and stock adjusted successfully'], 200);
     }
+
+
+    public function bulkUpdate(Request $request)
+    {
+        try {
+        $data = $request->validate([
+            'batches' => 'required|array',
+            'batches.*.batch_id' => 'required|exists:batch,batch_id',
+            'batches.*.status' => 'nullable|string|max:20',
+        ]);
+
+        DB::beginTransaction();
+    
+    
+            foreach ($data['batches'] as $batchData) {
+                $batch = Batch::where('batch_id', $batchData['batch_id'])->firstOrFail();
+                $batch->update($batchData);
+            }
+    
+            DB::commit();
+            return response()->json(['message' => 'Bulk update successful'], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();  // Rollback should come before any return statement
+    
+            return response()->json(['error' => 'Bulk update failed', 'details' => $e->getMessage()], 500);
+        }
+    }
+    
 }
