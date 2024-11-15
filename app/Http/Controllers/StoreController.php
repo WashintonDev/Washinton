@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Store;
 use Illuminate\Http\Request;
 
+use function PHPSTORM_META\map;
+
 class StoreController extends Controller
 {
     public function index()
@@ -56,4 +58,22 @@ class StoreController extends Controller
 
         return response()->json(['message' => 'Store deleted successfully']);
     }
+
+    public function store_labels(){
+        $store = Store::all();
+
+        if ($store) {
+            $labels = $store->map(function ($stores){
+                return [ 
+                 'label' => $stores->name, 
+                'value' => $stores->store_id,];
+            });
+
+            return response() -> json($labels);
+
+        }else{
+            return response() -> json(['message' => 'No stores avaliable']);
+        }
+    }
+
 }

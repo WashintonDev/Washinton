@@ -17,6 +17,7 @@ use App\Http\Controllers\WarehouseTransferDetailController;
 use App\Http\Controllers\RestockRequestController;
 use App\Http\Controllers\RestockRequestDetailController;
 use App\Http\Controllers\BatchController;
+use App\Models\Product;
 
 Route::apiResource('category', CategoryController::class);
 Route::apiResource('supplier', SupplierController::class);
@@ -36,3 +37,7 @@ Route::apiResource('restock_request', RestockRequestController::class);
 Route::apiResource('restock_request_detail', RestockRequestDetailController::class);
 Route::post('/batch/update-status', [BatchController::class, 'updateStatus']);
 Route::get('/supplier/{supplier_id}/deliveries', [ProductBatchController::class, 'getSupplierDeliveries']);
+
+//Transfer orders
+Route::get('/stores/labels', [StoreController::class, 'store_labels']);
+Route::get('/products/labels', [ProductController::class, 'product_names']);

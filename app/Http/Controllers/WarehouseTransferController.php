@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\WarehouseTransfer;
+use Exception;
 use Illuminate\Http\Request;
 
 class WarehouseTransferController extends Controller
@@ -14,13 +15,18 @@ class WarehouseTransferController extends Controller
 
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'store_id' => 'required|exists:store,store_id',
-            'transfer_date' => 'required|date',
-            'status' => 'required|string|max:10'
-        ]);
+        try{
+            $validatedData = $request->validate([
+                'store_id' => 'required|exists:store,store_id',
+                'transfer_date' => 'required|date',
+                'status' => 'required|string|max:10'
+            ]);
 
-        return WarehouseTransfer::create($validatedData);
+            return WarehouseTransfer::create($validatedData);
+            
+        }catch(Exception $e){
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function show($id)

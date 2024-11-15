@@ -67,4 +67,21 @@ class ProductController extends Controller
 
         return response()->json(['message' => 'Product deleted successfully']);
     }
+
+    public function product_names(){
+        $products = Product::all();
+
+        if ($products){
+            $transformedProducts = $products->map(function ($product){
+                return [
+                    'label' => $product->name,
+                    'value' => $product->product_id
+                ];
+            });
+
+            return response()->json($transformedProducts);
+        } else{
+            return response()->json(['message' => 'No products avaliable']);
+        }
+    }
 }
