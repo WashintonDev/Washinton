@@ -42,5 +42,6 @@ Route::get('/supplier/{supplier_id}/deliveries', [ProductBatchController::class,
 //Transfer orders
 Route::get('/stores/labels', [StoreController::class, 'store_labels']);
 Route::get('/products/labels', [ProductController::class, 'product_names']);
-
+//batches
 Route::put('batches/bulk_update', [BatchController::class, 'bulkUpdate']);
+Route::patch('/batch/update-status/{id}', [BatchController::class, 'patchUpdate']);

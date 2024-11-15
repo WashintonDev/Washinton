@@ -142,5 +142,24 @@ class BatchController extends Controller
             return response()->json(['error' => 'Bulk update failed', 'details' => $e->getMessage()], 500);
         }
     }
+
+    public function patchUpdate(Request $request, $id)
+    {
+        $validatedData = $request->validate([
+            'batch_name' => 'sometimes|string|max:100',
+            'status' => 'sometimes|string|max:20',
+            'requested_at' => 'sometimes|date',
+        ]);
+
+        $batch = Batch::find($id);
+        
+        if (!$batch) {
+            return response()->json(['message' => 'Batch not found'], 404);
+        }
+
+        $batch->update($validatedData);
+
+        return response()->json($batch);
+    }
     
 }
