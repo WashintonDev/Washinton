@@ -39,6 +39,9 @@ Route::apiResource('restock_request_detail', RestockRequestDetailController::cla
 Route::patch('/batch/update-status/{id}', [BatchController::class, 'patchUpdate']);
 Route::post('/batch/update-status', [BatchController::class, 'updateStatus']);
 Route::get('/supplier/{supplier_id}/deliveries', [ProductBatchController::class, 'getSupplierDeliveries']);
+Route::get('product/sku/{sku}', [ProductController::class, 'getProductWithCategories']);
+
+
 
 //Transfer orders
 Route::get('/stores/labels', [StoreController::class, 'store_labels']);

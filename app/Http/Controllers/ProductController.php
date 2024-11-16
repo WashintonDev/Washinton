@@ -93,33 +93,29 @@ public function update(Request $request, $id)
         'type' => 'nullable|string|max:50',
     ]);
 
+    // Manejo del campo de imagen
     if ($request->hasFile('image')) {
-        \Log::info('Archivo de imagen recibido.');
-
-        // Eliminar la imagen anterior si existe
+        // Eliminar imagen anterior si existe
         if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
             Storage::delete('public/' . str_replace('storage/', '', $product->image));
         }
-
-        // Guardar la nueva imagen en 'public/storage/images'
+        // Guardar nueva imagen
         $path = $request->file('image')->store('images', 'public');
-        $validatedData['image'] = 'storage/' . $path;
-
-        \Log::info('Nueva imagen guardada en la ruta:', ['path' => $validatedData['image']]);
-    } else {
-        \Log::info('No se recibió un archivo de imagen en la solicitud.');
+        $product->image = 'storage/' . $path;
+    } elseif ($request->has('image') && $request->input('image') === '') {
+        // Eliminar imagen si se envía una cadena vacía
+        if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
+            Storage::delete('public/' . str_replace('storage/', '', $product->image));
+        }
+        $product->image = null;
     }
 
     // Actualizar otros campos
     $product->fill($validatedData);
     $product->save();
 
-    \Log::info('Producto actualizado:', ['product' => $product]);
-
     return response()->json($product, 200);
 }
-
-
 
 
 
