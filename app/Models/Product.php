@@ -11,7 +11,20 @@ class Product extends Model
 
     protected $table = 'product';
     protected $primaryKey = 'product_id';
-    protected $fillable = ['name', 'sku', 'description', 'price', 'status', 'image', 'category_id', 'supplier_id', 'type'];
+    protected $fillable = [
+        'name',
+        'sku',
+        'brand', // Nuevo campo
+        'description',
+        'price',
+        'status',
+        'image',
+        'category_id',
+        'supplier_id',
+        'type',
+        'volume',
+        'unit'
+    ];
 
     // Relación con categoría
     public function category()
@@ -20,10 +33,10 @@ class Product extends Model
     }
 
     // Relación muchos-a-muchos con proveedores
-    public function suppliers()
-    {
-        return $this->belongsToMany(Supplier::class, 'product_supplier', 'product_id', 'supplier_id');
-    }
+public function suppliers()
+{
+    return $this->belongsToMany(Supplier::class, 'product_supplier', 'product_id', 'supplier_id');
+}
 
     // Relación con inventario
     public function inventory()

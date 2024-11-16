@@ -21,17 +21,20 @@ public function store(Request $request)
 
     $validatedData = $request->validate([
         'name' => 'required|string|max:80',
+        'brand' => 'required|string|max:50',
         'description' => 'nullable|string',
         'price' => 'required|numeric',
         'status' => 'nullable|string|max:10',
-        'image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048',
+        'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
         'category_id' => 'required|exists:category,category_id',
         'supplier_id' => 'required|exists:supplier,supplier_id',
-        'type' => 'required|string|max:50',
+        'type' => 'required|string|max:50', // Asegura que type sea obligatorio
+        'volume' => 'nullable|numeric',
+        'unit' => 'nullable|string|max:10',
     ]);
 
-    // Generar SKU automáticamente si no está en los datos validados
-    $validatedData['sku'] = $request->input('sku', strtoupper(\Str::random(10)));
+    // Generar SKU automáticamente
+    $validatedData['sku'] = $this->generateNumericSku();
 
     if ($request->hasFile('image')) {
         $path = $request->file('image')->store('images', 'public');
@@ -39,7 +42,12 @@ public function store(Request $request)
     }
 
     try {
+        // Crear el producto
         $product = Product::create($validatedData);
+
+        // Crear la relación en product_supplier
+        $product->suppliers()->attach($validatedData['supplier_id']);
+
         return response()->json($product, 201);
     } catch (\Exception $e) {
         \Log::error("Error al guardar el producto: " . $e->getMessage());
@@ -48,28 +56,43 @@ public function store(Request $request)
 }
 
 
-public function destroy($id)
+
+
+/**
+ * Genera un SKU de 8 dígitos numéricos aleatorios.
+ *
+ * @return string
+ */
+private function generateNumericSku()
 {
-    try {
-        $product = Product::findOrFail($id);
+    do {
+        $sku = str_pad(mt_rand(1, 99999999), 8, '0', STR_PAD_LEFT);
+    } while (Product::where('sku', $sku)->exists());
 
-        // Verificar y eliminar la imagen si existe
-        if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
-            Storage::delete('public/' . str_replace('storage/', '', $product->image));
-        }
-
-        // Eliminar el producto de la base de datos
-        $product->delete();
-
-        return response()->json(['message' => 'Product and associated image deleted successfully'], 200);
-    } catch (\Exception $e) {
-        \Log::error("Error deleting product: " . $e->getMessage());
-        return response()->json(['message' => 'Error deleting product'], 500);
-    }
+    return $sku;
 }
 
+  
+    public function destroy($id)
+    {
+        try {
+            $product = Product::findOrFail($id);
 
-    // Mostrar un producto específico
+            // Verificar y eliminar la imagen si existe
+            if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
+                Storage::delete('public/' . str_replace('storage/', '', $product->image));
+            }
+
+            // Eliminar el producto de la base de datos
+            $product->delete();
+
+            return response()->json(['message' => 'Product and associated image deleted successfully'], 200);
+        } catch (\Exception $e) {
+            \Log::error("Error deleting product: " . $e->getMessage());
+            return response()->json(['message' => 'Error deleting product'], 500);
+        }
+    }
+
     public function show($id)
     {
         return Product::findOrFail($id);
@@ -84,40 +107,42 @@ public function update(Request $request, $id)
     $validatedData = $request->validate([
         'name' => 'nullable|string|max:80',
         'sku' => 'nullable|string|max:10|unique:product,sku,' . $id . ',product_id',
+        'brand' => 'nullable|string|max:50',
         'description' => 'nullable|string',
         'price' => 'nullable|numeric',
         'status' => 'nullable|string|max:10',
-        'image' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:2048',
+        'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
         'category_id' => 'nullable|exists:category,category_id',
         'supplier_id' => 'nullable|exists:supplier,supplier_id',
         'type' => 'nullable|string|max:50',
+        'volume' => 'nullable|numeric',
+        'unit' => 'nullable|string|max:10',
     ]);
 
     // Manejo del campo de imagen
     if ($request->hasFile('image')) {
-        // Eliminar imagen anterior si existe
         if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
             Storage::delete('public/' . str_replace('storage/', '', $product->image));
         }
-        // Guardar nueva imagen
         $path = $request->file('image')->store('images', 'public');
         $product->image = 'storage/' . $path;
     } elseif ($request->has('image') && $request->input('image') === '') {
-        // Eliminar imagen si se envía una cadena vacía
         if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
             Storage::delete('public/' . str_replace('storage/', '', $product->image));
         }
         $product->image = null;
     }
 
-    // Actualizar otros campos
     $product->fill($validatedData);
     $product->save();
 
+    // Actualizar la relación en product_supplier
+    if (isset($validatedData['supplier_id'])) {
+        $product->suppliers()->sync([$validatedData['supplier_id']]);
+    }
+
     return response()->json($product, 200);
 }
-
-
 
 
     public function getProductWithCategories($sku)
