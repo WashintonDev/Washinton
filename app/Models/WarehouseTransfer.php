@@ -22,6 +22,6 @@ class WarehouseTransfer extends Model
     // Relación con los detalles de la transferencia
     public function details()
     {
-        return $this->hasMany(WarehouseTransferDetail::class, 'transfer_id');
+        return $this->hasMany(WarehouseTransferDetail::class, 'transfer_id')->with('product');
     }
 }
