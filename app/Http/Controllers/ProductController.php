@@ -15,64 +15,107 @@ class ProductController extends Controller
         return Product::all();
     }
 
-public function store(Request $request)
-{
-    \Log::info('Datos recibidos:', $request->all());
-
-    $validatedData = $request->validate([
-        'name' => 'required|string|max:80',
-        'brand' => 'required|string|max:50',
-        'description' => 'nullable|string',
-        'price' => 'required|numeric',
-        'status' => 'nullable|string|max:10',
-        'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
-        'category_id' => 'required|exists:category,category_id',
-        'supplier_id' => 'required|exists:supplier,supplier_id',
-        'type' => 'required|string|max:50', // Asegura que type sea obligatorio
-        'volume' => 'nullable|numeric',
-        'unit' => 'nullable|string|max:10',
-    ]);
-
-    // Generar SKU automáticamente
-    $validatedData['sku'] = $this->generateNumericSku();
-
-    if ($request->hasFile('image')) {
-        $path = $request->file('image')->store('images', 'public');
-        $validatedData['image'] = 'storage/' . $path;
+    private function generateNumericSku()
+    {
+        do {
+            $sku = str_pad(mt_rand(1, 99999999), 8, '0', STR_PAD_LEFT);
+        } while (Product::where('sku', $sku)->exists());
+    
+        return $sku;
     }
 
-    try {
-        // Crear el producto
-        $product = Product::create($validatedData);
 
-        // Crear la relación en product_supplier
-        $product->suppliers()->attach($validatedData['supplier_id']);
-
-        return response()->json($product, 201);
-    } catch (\Exception $e) {
-        \Log::error("Error al guardar el producto: " . $e->getMessage());
-        return response()->json(['message' => 'Error guardando el producto'], 500);
+    // Crear un nuevo producto
+    public function store(Request $request)
+    {
+    
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:80',
+            'brand' => 'required|string|max:50',
+            'description' => 'nullable|string',
+            'price' => 'required|numeric',
+            'status' => 'nullable|string|max:10',
+            'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
+            'category_id' => 'required|exists:category,category_id',
+            'supplier_id' => 'required|exists:supplier,supplier_id',
+            'type' => 'required|string|max:50', // Asegura que type sea obligatorio
+            'volume' => 'nullable|numeric',
+            'unit' => 'nullable|string|max:10',
+        ]);
+    
+        // Generar SKU automáticamente
+        $validatedData['sku'] = $this->generateNumericSku();
+    
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('images', 'public');
+            $validatedData['image'] = 'storage/' . $path;
+        }
+    
+        try {
+            // Crear el producto
+            $product = Product::create($validatedData);
+    
+            // Crear la relación en product_supplier
+            $product->suppliers()->attach($validatedData['supplier_id']);
+    
+            return response()->json($product, 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error guardando el producto'], 500);
+        }
     }
-}
 
+    // Mostrar un producto específico
+    public function show($id)
+    {
+        return Product::findOrFail($id);
+    }
 
+    // Actualizar un producto existente
+    public function update(Request $request, $id)
+    {    
+        $product = Product::findOrFail($id);
+    
+        $validatedData = $request->validate([
+            'name' => 'nullable|string|max:80',
+            'sku' => 'nullable|string|max:10|unique:product,sku,' . $id . ',product_id',
+            'brand' => 'nullable|string|max:50',
+            'description' => 'nullable|string',
+            'price' => 'nullable|numeric',
+            'status' => 'nullable|string|max:10',
+            'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
+            'category_id' => 'nullable|exists:category,category_id',
+            'supplier_id' => 'nullable|exists:supplier,supplier_id',
+            'type' => 'nullable|string|max:50',
+            'volume' => 'nullable|numeric',
+            'unit' => 'nullable|string|max:10',
+        ]);
+    
+        // Manejo del campo de imagen
+        if ($request->hasFile('image')) {
+            if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
+                Storage::delete('public/' . str_replace('storage/', '', $product->image));
+            }
+            $path = $request->file('image')->store('images', 'public');
+            $product->image = 'storage/' . $path;
+        } elseif ($request->has('image') && $request->input('image') === '') {
+            if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
+                Storage::delete('public/' . str_replace('storage/', '', $product->image));
+            }
+            $product->image = null;
+        }
+    
+        $product->fill($validatedData);
+        $product->save();
+    
+        // Actualizar la relación en product_supplier
+        if (isset($validatedData['supplier_id'])) {
+            $product->suppliers()->sync([$validatedData['supplier_id']]);
+        }
+    
+        return response()->json($product, 200);
+    }
 
-
-/**
- * Genera un SKU de 8 dígitos numéricos aleatorios.
- *
- * @return string
- */
-private function generateNumericSku()
-{
-    do {
-        $sku = str_pad(mt_rand(1, 99999999), 8, '0', STR_PAD_LEFT);
-    } while (Product::where('sku', $sku)->exists());
-
-    return $sku;
-}
-
-  
+    // Eliminar un producto
     public function destroy($id)
     {
         try {
@@ -88,62 +131,27 @@ private function generateNumericSku()
 
             return response()->json(['message' => 'Product and associated image deleted successfully'], 200);
         } catch (\Exception $e) {
-            \Log::error("Error deleting product: " . $e->getMessage());
             return response()->json(['message' => 'Error deleting product'], 500);
         }
     }
 
-    public function show($id)
-    {
-        return Product::findOrFail($id);
-    }
+    //This function has to only retrieve the product that have stock avaliable, also it has to return the stock amount they have
+    public function product_names(){
+        $products = Product::all();
 
-public function update(Request $request, $id)
-{
-    \Log::info('Datos recibidos en update:', $request->all());
+        if ($products){
+            $transformedProducts = $products->map(function ($product){
+                return [
+                    'label' => $product->name,
+                    'value' => $product->product_id
+                ];
+            });
 
-    $product = Product::findOrFail($id);
-
-    $validatedData = $request->validate([
-        'name' => 'nullable|string|max:80',
-        'sku' => 'nullable|string|max:10|unique:product,sku,' . $id . ',product_id',
-        'brand' => 'nullable|string|max:50',
-        'description' => 'nullable|string',
-        'price' => 'nullable|numeric',
-        'status' => 'nullable|string|max:10',
-        'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
-        'category_id' => 'nullable|exists:category,category_id',
-        'supplier_id' => 'nullable|exists:supplier,supplier_id',
-        'type' => 'nullable|string|max:50',
-        'volume' => 'nullable|numeric',
-        'unit' => 'nullable|string|max:10',
-    ]);
-
-    // Manejo del campo de imagen
-    if ($request->hasFile('image')) {
-        if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
-            Storage::delete('public/' . str_replace('storage/', '', $product->image));
+            return response()->json($transformedProducts);
+        } else{
+            return response()->json(['message' => 'No products avaliable']);
         }
-        $path = $request->file('image')->store('images', 'public');
-        $product->image = 'storage/' . $path;
-    } elseif ($request->has('image') && $request->input('image') === '') {
-        if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
-            Storage::delete('public/' . str_replace('storage/', '', $product->image));
-        }
-        $product->image = null;
     }
-
-    $product->fill($validatedData);
-    $product->save();
-
-    // Actualizar la relación en product_supplier
-    if (isset($validatedData['supplier_id'])) {
-        $product->suppliers()->sync([$validatedData['supplier_id']]);
-    }
-
-    return response()->json($product, 200);
-}
-
 
     public function getProductWithCategories($sku)
     {
@@ -163,7 +171,6 @@ public function update(Request $request, $id)
                 'parent_category_name' => $parentCategory ? $parentCategory->name : null,
             ]);
         } catch (\Exception $e) {
-            \Log::error("Error fetching product with categories: " . $e->getMessage());
             return response()->json(['message' => 'Internal server error'], 500);
         }
     }
