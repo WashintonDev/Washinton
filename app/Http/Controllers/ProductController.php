@@ -174,4 +174,14 @@ class ProductController extends Controller
             return response()->json(['message' => 'Internal server error'], 500);
         }
     }
+
+    public function getProductNames()
+    {
+
+            // Retrieve an array with only the 'name' column
+            $productNames = Product::pluck('name');  // This will return an array of product names
+    
+            // Return the array as a JSON response
+            return response()->json($productNames);
+        }
 }

@@ -10,10 +10,33 @@ use App\Models\WarehouseTransferDetail;
 
 class WarehouseTransferController extends Controller
 {
-    public function index()
-    {
-        return WarehouseTransfer::with('details')->get();
-    }
+        public function index()
+        {
+            try {
+                $transfers = WarehouseTransfer::with(['store', 'details.product'])->get();
+    
+                // Hide the created_at and updated_at fields and customize the response
+                $transfers->each(function ($transfer) {
+                    $transfer->makeHidden(['created_at', 'updated_at']);
+                    $transfer->store->makeHidden(['created_at', 'updated_at', 'phone', 'address', 'status', 'city', 'state']);
+                    foreach ($transfer->details as $detail) {
+                        $detail->makeHidden(['created_at', 'updated_at']);
+                        $detail->product->makeHidden(['created_at', 'updated_at', 'sku', 'brand', 'description', 'price', 'status', 'image', 'category_id', 'supplier_id', 'type', 'volume', 'unit']);
+                    }
+                });
+    
+                // Customize the response to include only the store name
+                $response = $transfers->map(function ($transfer) {
+                    $transferArray = $transfer->toArray();
+                    $transferArray['store'] = $transfer->store->name;
+                    return $transferArray;
+                });
+    
+                return response()->json($response);
+            } catch (\Exception $e) {
+                return response()->json(['message' => 'An error occurred while fetching transfers', 'error' => $e->getMessage()], 500);
+            }
+        }
 
     public function store(Request $request)
     {
@@ -30,25 +53,21 @@ class WarehouseTransferController extends Controller
         }
     }
 
-    public function show($id)
-    {
-        return WarehouseTransfer::with('details')->findOrFail($id);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $transfer = WarehouseTransfer::findOrFail($id);
-
-        $validatedData = $request->validate([
-            'store_id' => 'required|exists:store,store_id',
-            'transfer_date' => 'required|date',
-            'status' => 'required|string|max:10'
-        ]);
-
-        $transfer->update($validatedData);
-
-        return response()->json(['message' => 'Warehouse transfer updated successfully', 'data' => $transfer]);
-    }
+    public function show($id) { 
+        try { $transfer = WarehouseTransfer::with(['store', 'details.product'])->findOrFail($id); 
+            // Hide the created_at and updated_at fields 
+            $transfer->makeHidden(['created_at', 'updated_at']); 
+            $transfer->store->makeHidden(['created_at', 'updated_at', 'phone', 'address', 'status', 'city', 'state']); 
+            foreach ($transfer->details as $detail) { $detail->makeHidden(['created_at', 'updated_at']); 
+                $detail->product->makeHidden(['created_at', 'updated_at', 'sku', 'brand', 'description', 'price', 'status', 'image', 'category_id', 'supplier_id', 'type', 'volume', 'unit']); 
+            } 
+                // Customize the response to include only the store name 
+                $response = $transfer->toArray(); $response['store'] = $transfer->store->name; 
+                return response()->json($response); 
+            } catch (\Exception $e) {
+                  return response()->json(['message' => 'An error occurred while fetching the transfer', 'error' => $e->getMessage()], 500); 
+                } 
+            } 
 
     public function destroy($id)
     {
