@@ -33,16 +33,24 @@ class BatchController extends Controller
     // Crear un nuevo lote
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'code' => 'required|string|size:10', // Asegúrate de que el código tenga el tamaño correcto
-            'batch_name' => 'required|string|max:100',
-            'status' => 'required|string|max:20',
-            'requested_at' => 'nullable|date',
-        ]);
-
-        $batch = Batch::create($validatedData);
-
-        return response()->json($batch, 201);
+        try {
+            $validatedData = $request->validate([
+                'code' => 'required|string|size:10', // Ensure the code has the correct size
+                'batch_name' => 'required|string|max:100',
+                'status' => 'required|string|max:20',
+                'requested_at' => 'nullable|date',
+            ]);
+    
+            $batch = Batch::create($validatedData);
+    
+            return response()->json($batch, 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation failed: ' . json_encode($e->errors()));
+            return response()->json(['error' => 'Validation failed', 'messages' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Exception: ' . $e->getMessage());
+            return response()->json(['error' => 'Batch creation failed', 'details' => $e->getMessage()], 500);
+        }
     }
 
     // Actualizar un lote específico por su ID

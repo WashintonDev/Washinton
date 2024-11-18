@@ -37,6 +37,7 @@ Route::apiResource('warehouse_transfer', WarehouseTransferController::class);
 Route::apiResource('warehouse_transfer_detail', WarehouseTransferDetailController::class);
 Route::apiResource('restock_request', RestockRequestController::class);
 Route::apiResource('restock_request_detail', RestockRequestDetailController::class);
+Route::post('/create_batch', [BatchController::class, 'store']);
 Route::patch('/batch/update-status/{id}', [BatchController::class, 'patchUpdate']);
 Route::post('/batch/update-status', [BatchController::class, 'updateStatus']);
 Route::get('/supplier/{supplier_id}/deliveries', [ProductBatchController::class, 'getSupplierDeliveries']);
