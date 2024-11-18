@@ -128,25 +128,38 @@ class BatchController extends Controller
     public function bulkUpdate(Request $request)
     {
         try {
-        $data = $request->validate([
-            'batches' => 'required|array',
-            'batches.*.batch_id' => 'required|exists:batch,batch_id',
-            'batches.*.status' => 'nullable|string|max:20',
-        ]);
-
-        DB::beginTransaction();
+            $data = $request->validate([
+                'batches' => 'required|array',
+                'batches.*.batch_id' => 'required|exists:batch,batch_id',
+                'batches.*.status' => 'nullable|string|max:20',
+            ]);
     
+            DB::beginTransaction();
     
             foreach ($data['batches'] as $batchData) {
                 $batch = Batch::where('batch_id', $batchData['batch_id'])->firstOrFail();
                 $batch->update($batchData);
+                $batch->status = 'received';
+                $batch->save();
+    
+                $productsInBatch = ProductBatch::where('batch_id', $batch->batch_id)->get();
+    
+                foreach ($productsInBatch as $productBatch) {
+                    $inventory = Inventory::where('product_id', $productBatch->product_id)
+                        ->where('warehouse_id', 1)
+                        ->first();
+    
+                    if ($inventory) {
+                        $inventory->stock += $productBatch->quantity;
+                        $inventory->save();
+                    }
+                }
             }
     
             DB::commit();
             return response()->json(['message' => 'Bulk update successful'], 200);
         } catch (\Exception $e) {
-            DB::rollBack();  // Rollback should come before any return statement
-    
+            DB::rollBack();
             return response()->json(['error' => 'Bulk update failed', 'details' => $e->getMessage()], 500);
         }
     }
@@ -158,16 +171,31 @@ class BatchController extends Controller
             'status' => 'sometimes|string|max:20',
             'requested_at' => 'sometimes|date',
         ]);
-
+    
         $batch = Batch::find($id);
-        
+    
         if (!$batch) {
             return response()->json(['message' => 'Batch not found'], 404);
         }
-
+    
         $batch->update($validatedData);
-
-        return response()->json($batch);
+        $batch->status = 'received';
+        $batch->save();
+    
+        $productsInBatch = ProductBatch::where('batch_id', $batch->batch_id)->get();
+    
+        foreach ($productsInBatch as $productBatch) {
+            $inventory = Inventory::where('product_id', $productBatch->product_id)
+                ->where('warehouse_id', 1)
+                ->first();
+    
+            if ($inventory) {
+                $inventory->stock += $productBatch->quantity;
+                $inventory->save();
+            }
+        }
+    
+        return response()->json(['message' => 'Batch status updated and stock adjusted successfully'], 200);
     }
     
 }
