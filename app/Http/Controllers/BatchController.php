@@ -139,19 +139,19 @@ class BatchController extends Controller
             foreach ($data['batches'] as $batchData) {
                 $batch = Batch::where('batch_id', $batchData['batch_id'])->firstOrFail();
                 $batch->update($batchData);
-                $batch->status = 'received';
-                $batch->save();
     
-                $productsInBatch = ProductBatch::where('batch_id', $batch->batch_id)->get();
+                if ($batchData['status'] === 'received') {
+                    $productsInBatch = ProductBatch::where('batch_id', $batch->batch_id)->get();
     
-                foreach ($productsInBatch as $productBatch) {
-                    $inventory = Inventory::where('product_id', $productBatch->product_id)
-                        ->where('warehouse_id', 1)
-                        ->first();
+                    foreach ($productsInBatch as $productBatch) {
+                        $inventory = Inventory::where('product_id', $productBatch->product_id)
+                            ->where('warehouse_id', 1)
+                            ->first();
     
-                    if ($inventory) {
-                        $inventory->stock += $productBatch->quantity;
-                        $inventory->save();
+                        if ($inventory) {
+                            $inventory->stock += $productBatch->quantity;
+                            $inventory->save();
+                        }
                     }
                 }
             }
@@ -179,19 +179,19 @@ class BatchController extends Controller
         }
     
         $batch->update($validatedData);
-        $batch->status = 'received';
-        $batch->save();
     
-        $productsInBatch = ProductBatch::where('batch_id', $batch->batch_id)->get();
+        if ($validatedData['status'] === 'received') {
+            $productsInBatch = ProductBatch::where('batch_id', $batch->batch_id)->get();
     
-        foreach ($productsInBatch as $productBatch) {
-            $inventory = Inventory::where('product_id', $productBatch->product_id)
-                ->where('warehouse_id', 1)
-                ->first();
+            foreach ($productsInBatch as $productBatch) {
+                $inventory = Inventory::where('product_id', $productBatch->product_id)
+                    ->where('warehouse_id', 1)
+                    ->first();
     
-            if ($inventory) {
-                $inventory->stock += $productBatch->quantity;
-                $inventory->save();
+                if ($inventory) {
+                    $inventory->stock += $productBatch->quantity;
+                    $inventory->save();
+                }
             }
         }
     
