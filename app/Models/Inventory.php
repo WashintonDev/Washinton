@@ -11,7 +11,7 @@ class Inventory extends Model
 
     protected $table = 'inventory';
     protected $primaryKey = 'inventory_id';
-    protected $fillable = ['product_id', 'warehouse_id', 'store_id', 'stock'];
+    protected $fillable = ['product_id', 'warehouse_id', 'store_id', 'stock', 'Reserved_Stock'];
 
     // Relación con producto
     public function product()

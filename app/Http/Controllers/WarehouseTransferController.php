@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Http\Request;
 use  App\Models\Inventory;
 use App\Models\WarehouseTransferDetail;
+use Illuminate\Support\Facades\DB;
 
 class WarehouseTransferController extends Controller
 {
@@ -80,44 +81,76 @@ class WarehouseTransferController extends Controller
      // Add the stock to the inv of the store
      public function updateStoreStock($orderID)
      {
+         DB::beginTransaction(); // Start a transaction for atomic operations
+     
          try {
-             // Get the products and qty of the order
+             // Get the products and their quantities from the order
              $products = WarehouseTransferDetail::where('transfer_id', $orderID)->get();
      
-             if (!$products) {
-                 return response()->json(['message' => 'Batch not found'], 404);
+             if ($products->isEmpty()) {
+                 return response()->json(['message' => 'No products found for this order'], 404);
              }
      
-             // Update the status of the order to Delivered
+             // Get the store ID from the order
+             $storeID = WarehouseTransfer::where('transfer_id', $orderID)->value('store_id');
+             if (!$storeID) {
+                 return response()->json(['message' => 'Store not found for this order'], 404);
+             }
+     
+             // Update the status of the order to 'Delivered'
              WarehouseTransfer::where('transfer_id', $orderID)->update(['status' => 'Delivered']);
      
-          // Sum the quantities to the corresponding inventory 
-          foreach ($products as $productOrder) { 
-            $storeID = WarehouseTransfer::where('transfer_id', $orderID)->value('store_id'); 
-            $inventory = Inventory::where('product_id', $productOrder->product_id)
-                ->where('store_id', $storeID)
-                ->first(); 
-                if ($inventory) { 
-                    // If the product exists in the inventory, update the stock 
-                    $inventory->stock += $productOrder->quantity; $inventory->save(); 
-                } else { 
-                    // If the product does not exist in the inventory, create a new inventory record 
-                    Inventory::create([ 'product_id' => $productOrder->product_id, 'store_id' => $storeID, 'stock' => $productOrder->quantity]);
-                } 
-            }
+             foreach ($products as $productOrder) {
+                 // Update the store's inventory
+                 $storeInventory = Inventory::where('product_id', $productOrder->product_id)
+                     ->where('store_id', $storeID)
+                     ->first();
      
-             // Return the products as a JSON response
-             return response()->json(['message'=>'Stock added succesfully!']);
+                 if ($storeInventory) {
+                     // If the product exists in the store's inventory, update the stock
+                     $storeInventory->stock += $productOrder->quantity;
+                     $storeInventory->save();
+                 } else {
+                     // If the product does not exist in the store's inventory, create a new record
+                     Inventory::create([
+                         'product_id' => $productOrder->product_id,
+                         'store_id' => $storeID,
+                         'stock' => $productOrder->quantity,
+                         'Reserved_Stock' => 0, // Default Reserved_Stock to 0
+                     ]);
+                 }
+     
+                 // Update the warehouse's inventory
+                 $warehouseInventory = Inventory::where('product_id', $productOrder->product_id)
+                     ->where('warehouse_id', 1)
+                     ->first();
+     
+                 if ($warehouseInventory) {
+                     // Subtract the quantity from Reserved_Stock
+                     if ($warehouseInventory->Reserved_Stock < $productOrder->quantity) {
+                         return response()->json(['message' => "Not enough reserved stock to release {$productOrder} < {$productOrder->quantity}"], 400);
+                     }
+     
+                     $warehouseInventory->Reserved_Stock -= $productOrder->quantity;
+                     $warehouseInventory->save();
+                 } else {
+                     return response()->json(['message' => 'Warehouse inventory record not found'], 404);
+                 }
+             }
+     
+             DB::commit(); // Commit the transaction
+             return response()->json(['message' => 'Stock updated successfully!'], 200);
+     
          } catch (\Exception $e) {
-             // Return a JSON response with the error message and stack trace
+             DB::rollBack(); // Rollback the transaction in case of error
              return response()->json([
                  'message' => 'An error occurred while updating store stock',
                  'error' => $e->getMessage(),
-                 'stack' => $e->getTraceAsString()
+                 'stack' => $e->getTraceAsString(),
              ], 500);
          }
-         
      }
+     
 
      public function updStatusOrder($orderID){
         try {

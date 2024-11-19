@@ -6,6 +6,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Inventory;
 
 class ProductController extends Controller
 {
@@ -136,20 +137,27 @@ class ProductController extends Controller
     }
 
     //This function has to only retrieve the product that have stock avaliable, also it has to return the stock amount they have
-    public function product_names(){
+    public function product_names()
+    {
         $products = Product::all();
-
-        if ($products){
-            $transformedProducts = $products->map(function ($product){
+        $inventory = Inventory::whereNotNull('warehouse_id')->get();
+    
+        if ($products->isNotEmpty()) {
+            // Map through products to include the stock from inventory
+            $transformedProducts = $products->map(function ($product) use ($inventory) {
+                // Find inventory stock for the current product
+                $productStock = $inventory->where('product_id', $product->product_id)->sum('stock');
+    
                 return [
                     'label' => $product->name,
-                    'value' => $product->product_id
+                    'value' => $product->product_id,
+                    'stock' => $productStock // Add the stock of the product
                 ];
             });
-
+    
             return response()->json($transformedProducts);
-        } else{
-            return response()->json(['message' => 'No products avaliable']);
+        } else {
+            return response()->json(['message' => 'No products available']);
         }
     }
 
