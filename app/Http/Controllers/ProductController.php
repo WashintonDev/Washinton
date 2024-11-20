@@ -29,7 +29,6 @@ class ProductController extends Controller
     // Crear un nuevo producto
     public function store(Request $request)
     {
-    
         $validatedData = $request->validate([
             'name' => 'required|string|max:80',
             'brand' => 'required|string|max:50',
@@ -37,43 +36,51 @@ class ProductController extends Controller
             'price' => 'required|numeric',
             'status' => 'nullable|string|max:10',
             'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
+            'additional_images.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,avif|max:2048', // Para imágenes adicionales
             'category_id' => 'required|exists:category,category_id',
             'supplier_id' => 'required|exists:supplier,supplier_id',
-            'type' => 'required|string|max:50', // Asegura que type sea obligatorio
+            'type' => 'required|string|max:50',
             'volume' => 'nullable|numeric',
             'unit' => 'nullable|string|max:10',
         ]);
     
-        // Generar SKU automáticamente
         $validatedData['sku'] = $this->generateNumericSku();
     
+        // Guardar la imagen principal
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('images', 'public');
             $validatedData['image'] = 'storage/' . $path;
         }
     
         try {
-            // Crear el producto
             $product = Product::create($validatedData);
     
-            // Crear la relación en product_supplier
-            $product->suppliers()->attach($validatedData['supplier_id']);
+            // Guardar imágenes adicionales
+            if ($request->hasFile('additional_images')) {
+                foreach ($request->file('additional_images') as $image) {
+                    $path = $image->store('product_images', 'public');
+                    $product->productImages()->create(['image_path' => 'storage/' . $path]);
+                }
+            }
     
-            return response()->json($product, 201);
+            return response()->json($product->load('productImages'), 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error guardando el producto'], 500);
+            return response()->json(['message' => 'Error guardando el producto', 'error' => $e->getMessage()], 500);
         }
     }
+    
 
     // Mostrar un producto específico
     public function show($id)
     {
-        return Product::findOrFail($id);
+        $product = Product::with('productImages')->findOrFail($id);
+        return response()->json($product);
     }
+    
 
     // Actualizar un producto existente
     public function update(Request $request, $id)
-    {    
+    {
         $product = Product::findOrFail($id);
     
         $validatedData = $request->validate([
@@ -84,6 +91,7 @@ class ProductController extends Controller
             'price' => 'nullable|numeric',
             'status' => 'nullable|string|max:10',
             'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
+            'additional_images.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
             'category_id' => 'nullable|exists:category,category_id',
             'supplier_id' => 'nullable|exists:supplier,supplier_id',
             'type' => 'nullable|string|max:50',
@@ -91,30 +99,37 @@ class ProductController extends Controller
             'unit' => 'nullable|string|max:10',
         ]);
     
-        // Manejo del campo de imagen
         if ($request->hasFile('image')) {
             if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
                 Storage::delete('public/' . str_replace('storage/', '', $product->image));
             }
             $path = $request->file('image')->store('images', 'public');
             $product->image = 'storage/' . $path;
-        } elseif ($request->has('image') && $request->input('image') === '') {
-            if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
-                Storage::delete('public/' . str_replace('storage/', '', $product->image));
+        }
+    
+        // Actualizar imágenes adicionales
+        if ($request->hasFile('additional_images')) {
+            // Eliminar las imágenes existentes
+            foreach ($product->productImages as $image) {
+                if (Storage::exists('public/' . str_replace('storage/', '', $image->image_path))) {
+                    Storage::delete('public/' . str_replace('storage/', '', $image->image_path));
+                }
+                $image->delete();
             }
-            $product->image = null;
+    
+            // Agregar las nuevas imágenes
+            foreach ($request->file('additional_images') as $image) {
+                $path = $image->store('product_images', 'public');
+                $product->productImages()->create(['image_path' => 'storage/' . $path]);
+            }
         }
     
         $product->fill($validatedData);
         $product->save();
     
-        // Actualizar la relación en product_supplier
-        if (isset($validatedData['supplier_id'])) {
-            $product->suppliers()->sync([$validatedData['supplier_id']]);
-        }
-    
-        return response()->json($product, 200);
+        return response()->json($product->load('productImages'), 200);
     }
+    
 
     // Eliminar un producto
     public function destroy($id)

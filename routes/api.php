@@ -10,6 +10,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProductBatchController;
 use App\Http\Controllers\ProductSupplierController;
+use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SaleDetailController;
 use App\Http\Controllers\WarehouseTransferController;
@@ -44,7 +45,10 @@ Route::get('/supplier/{supplier_id}/deliveries', [ProductBatchController::class,
 Route::get('product/sku/{sku}', [ProductController::class, 'getProductWithCategories']);
 Route::get('products/list-names', [ProductController::class, 'getProductNames']);
 
-
+// Product Images Routes
+Route::get('product/{product_id}/images', [ProductImageController::class, 'index']); // Listar imágenes de un producto
+Route::post('product/{product_id}/images', [ProductImageController::class, 'store']); // Subir imágenes adicionales
+Route::delete('product/image/{image_id}', [ProductImageController::class, 'destroy']); // Eliminar una imagen adicional
 
 //Transfer orders
 Route::get('/stores/labels', [StoreController::class, 'store_labels']);
