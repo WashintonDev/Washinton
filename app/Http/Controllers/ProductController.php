@@ -11,10 +11,11 @@ use App\Models\Inventory;
 class ProductController extends Controller
 {
     // Listar todos los productos
-    public function index()
-    {
-        return Product::all();
-    }
+public function index()
+{
+    return Product::with('productImages')->get();
+}
+
 
     private function generateNumericSku()
     {
@@ -46,11 +47,17 @@ class ProductController extends Controller
     
         $validatedData['sku'] = $this->generateNumericSku();
     
-        // Guardar la imagen principal
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('images', 'public');
-            $validatedData['image'] = 'storage/' . $path;
-        }
+if ($request->hasFile('image')) {
+    // Elimina la imagen antigua si existe
+    if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
+        Storage::delete('public/' . str_replace('storage/', '', $product->image));
+    }
+    // Guarda la nueva imagen
+    $path = $request->file('image')->store('images', 'public');
+    $product->image = 'storage/' . $path;
+}
+
+
     
         try {
             $product = Product::create($validatedData);

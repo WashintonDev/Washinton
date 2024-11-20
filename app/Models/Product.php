@@ -50,9 +50,10 @@ public function suppliers()
         return $this->hasMany(ProductBatch::class, 'product_id');
     }
 
-    public function productImages()
+public function productImages()
 {
     return $this->hasMany(ProductImage::class, 'product_id', 'product_id');
 }
+
 
 }
