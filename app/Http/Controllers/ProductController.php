@@ -47,19 +47,7 @@ public function index()
         ]);
     
         $validatedData['sku'] = $this->generateNumericSku();
-    
-if ($request->hasFile('image')) {
-    // Elimina la imagen antigua si existe
-    if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
-        Storage::delete('public/' . str_replace('storage/', '', $product->image));
-    }
-    // Guarda la nueva imagen
-    $path = $request->file('image')->store('images', 'public');
-    $product->image = 'storage/' . $path;
-}
-
-
-    
+        
         try {
             $product = Product::create($validatedData);
     
