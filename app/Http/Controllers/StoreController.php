@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Store;
 use Illuminate\Http\Request;
+use App\Models\Inventory;
 use Illuminate\Support\Facades\Log;
 
 class StoreController extends Controller
@@ -103,6 +104,21 @@ class StoreController extends Controller
         } catch (\Exception $e) {
             Log::error('Error fetching store labels: ' . $e->getMessage(), ['stack' => $e->getTraceAsString()]);
             return response()->json(['message' => 'An error occurred while fetching store labels', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    //endpoint to return the total stock in a specific store
+    public function store_inventory($storeID){
+        try{
+            $store_inv = Inventory::where('store_id', $storeID)->get();
+
+            if ($store_inv){
+                return response()->json($store_inv);
+            }else{
+                return response()->json(['message'=>'No products in that store']);
+            }
+        }catch(\Exception $e){
+
         }
     }
 
