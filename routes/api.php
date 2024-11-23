@@ -57,3 +57,6 @@ Route::post('/transfer_stock/{orderID}', [WarehouseTransferController::class, 'u
 Route::post('/transfer_stock_status/{orderID}', [WarehouseTransferController::class, 'updStatusOrder']);
 //batches
 Route::put('batches/bulk_update', [BatchController::class, 'bulkUpdate']);
+
+//STORE
+Route::get('inventories/store/{storeID}', [StoreController::class, 'store_inventory']);
