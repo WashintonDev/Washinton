@@ -108,18 +108,28 @@ class StoreController extends Controller
     }
 
     //endpoint to return the total stock in a specific store
-    public function store_inventory($storeID){
-        try{
-            $store_inv = Inventory::where('store_id', $storeID)->get();
-
-            if ($store_inv){
-                return response()->json($store_inv);
-            }else{
-                return response()->json(['message'=>'No products in that store']);
+    public function store_inventory(Request $request, $storeID)
+    {
+        try {
+            $query = Inventory::where('store_id', $storeID);
+    
+            if ($request->has('product_id')) {
+                $query->where('product_id', $request->input('product_id'));
             }
-        }catch(\Exception $e){
 
+            $storeInv = $query->with(['product', 'store'])->get();
+    
+            if ($storeInv->isEmpty()) {
+                return response()->json(['message' => 'No inventories found for the given parameters'], 404);
+            }
+
+            return response()->json($storeInv);
+        } catch (\Exception $e) {
+
+            Log::error('Error fetching store inventory: ' . $e->getMessage(), ['stack' => $e->getTraceAsString()]);
+            return response()->json(['message' => 'An error occurred while fetching the store inventory', 'error' => $e->getMessage()], 500);
         }
     }
+    
 
 }
