@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Category;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Inventory;
+use App\Models\Supplier;
 
 class ProductController extends Controller
 {
@@ -46,19 +47,7 @@ public function index()
         ]);
     
         $validatedData['sku'] = $this->generateNumericSku();
-    
-if ($request->hasFile('image')) {
-    // Elimina la imagen antigua si existe
-    if ($product->image && Storage::exists('public/' . str_replace('storage/', '', $product->image))) {
-        Storage::delete('public/' . str_replace('storage/', '', $product->image));
-    }
-    // Guarda la nueva imagen
-    $path = $request->file('image')->store('images', 'public');
-    $product->image = 'storage/' . $path;
-}
-
-
-    
+        
         try {
             $product = Product::create($validatedData);
     
@@ -187,24 +176,35 @@ if ($request->hasFile('image')) {
     {
         try {
             $product = Product::where('sku', $sku)->first();
-
+    
             if (!$product) {
                 return response()->json(['message' => 'Product not found'], 404);
             }
-
-            $subCategory = Category::find($product->category_id);
-            $parentCategory = $subCategory ? Category::find($subCategory->parent_id) : null;
-
-            return response()->json([
-                'product' => $product,
-                'sub_category_name' => $subCategory ? $subCategory->name : null,
-                'parent_category_name' => $parentCategory ? $parentCategory->name : null,
-            ]);
+    
+            $category = Category::find($product->category_id);
+            $supplier = Supplier::find($product->supplier_id);
+    
+            $transformedProduct = [
+                "product_id" => $product->product_id,
+                "name" => $product->name,
+                "sku" => $product->sku,
+                "brand" => $product->brand,
+                "description" => $product->description,
+                "price" => $product->price,
+                "status" => $product->status,
+                "category" => $category ? $category->name : null,
+                "supplier" => $supplier ? $supplier->name : null,
+                "type" => $product->type,
+                "volume" => $product->volume,
+                "unit" => $product->unit
+            ];
+    
+            return response()->json($transformedProduct);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Internal server error'], 500);
         }
     }
-
+    
     public function getProductNames()
     {
 
