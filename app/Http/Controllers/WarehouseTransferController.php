@@ -22,7 +22,7 @@ class WarehouseTransferController extends Controller
                     $transfer->store->makeHidden(['created_at', 'updated_at', 'phone', 'address', 'status', 'city', 'state']);
                     foreach ($transfer->details as $detail) {
                         $detail->makeHidden(['created_at', 'updated_at']);
-                        $detail->product->makeHidden(['created_at', 'updated_at', 'sku', 'brand', 'description', 'price', 'status', 'image', 'category_id', 'supplier_id', 'type', 'volume', 'unit']);
+                        $detail->product->makeHidden(['created_at', 'updated_at', 'sku', 'brand', 'description', 'status', 'image', 'category_id', 'supplier_id', 'type', 'volume', 'unit']);
                     }
                 });
     
@@ -30,6 +30,8 @@ class WarehouseTransferController extends Controller
                 $response = $transfers->map(function ($transfer) {
                     $transferArray = $transfer->toArray();
                     $transferArray['store'] = $transfer->store->name;
+                    $totalValue = $transfer->details->sum(function ($detail) { return $detail->product->price; });
+                    $transferArray['totalValue'] = $totalValue;
                     return $transferArray;
                 });
     
@@ -55,12 +57,14 @@ class WarehouseTransferController extends Controller
     }
 
     public function show($id) { 
-        try { $transfer = WarehouseTransfer::with(['store', 'details.product'])->findOrFail($id); 
+        try { 
+            
+            $transfer = WarehouseTransfer::with(['store', 'details.product'])->findOrFail($id); 
             // Hide the created_at and updated_at fields 
             $transfer->makeHidden(['created_at', 'updated_at']); 
             $transfer->store->makeHidden(['created_at', 'updated_at', 'phone', 'address', 'status', 'city', 'state']); 
             foreach ($transfer->details as $detail) { $detail->makeHidden(['created_at', 'updated_at']); 
-                $detail->product->makeHidden(['created_at', 'updated_at', 'sku', 'brand', 'description', 'price', 'status', 'image', 'category_id', 'supplier_id', 'type', 'volume', 'unit']); 
+                $detail->product->makeHidden(['created_at', 'updated_at', 'sku', 'brand', 'description', 'status', 'image', 'category_id', 'supplier_id', 'type', 'volume', 'unit']); 
             } 
                 // Customize the response to include only the store name 
                 $response = $transfer->toArray(); $response['store'] = $transfer->store->name; 

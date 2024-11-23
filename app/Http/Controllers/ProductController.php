@@ -162,7 +162,8 @@ public function index()
                 return [
                     'label' => $product->name,
                     'value' => $product->product_id,
-                    'stock' => $productStock // Add the stock of the product
+                    'stock' => $productStock, // Add the stock of the product
+                    'price' => $product->price //added price because trejo wanted to show the value of
                 ];
             });
     
