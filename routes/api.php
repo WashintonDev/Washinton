@@ -60,3 +60,4 @@ Route::put('batches/bulk_update', [BatchController::class, 'bulkUpdate']);
 
 //STORE
 Route::get('inventories/store/{storeID}', [StoreController::class, 'store_inventory']);
+Route::get('/user/firebase/{firebase_user_ID}',[UserController::class, 'index']);
