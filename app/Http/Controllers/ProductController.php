@@ -176,7 +176,7 @@ public function index()
     public function getProductWithCategories($sku)
     {
         try {
-            $product = Product::where('sku', $sku)->first();
+            $product = Product::where('sku', $sku)->with('productImages')->first();
     
             if (!$product) {
                 return response()->json(['message' => 'Product not found'], 404);
@@ -197,7 +197,8 @@ public function index()
                 "supplier" => $supplier ? $supplier->name : null,
                 "type" => $product->type,
                 "volume" => $product->volume,
-                "unit" => $product->unit
+                "unit" => $product->unit,
+                "image" => $product->productImages[0]->image_path
             ];
     
             return response()->json($transformedProduct);
@@ -210,9 +211,16 @@ public function index()
     {
 
             // Retrieve an array with only the 'name' column
-            $productNames = Product::pluck('name');  // This will return an array of product names
+            $products = Product::all();
+
+            $transformedProducts = $products->map(function ($product){
+                    return [
+                        "name" => $product->name,
+                        "sku" => $product->sku
+                    ];
+            });
     
             // Return the array as a JSON response
-            return response()->json($productNames);
+            return response()->json($transformedProducts);
         }
 }
