@@ -174,7 +174,7 @@ class WarehouseTransferController extends Controller
 
      public function getWarehouseTransfer($transferID){
         try {
-            $transfer = WarehouseTransfer::with('details')->findOrFail($transferID);
+        $transfer = WarehouseTransfer::with(['details', 'store'])->findOrFail($transferID);
             return response()->json($transfer);
         } catch (\Exception $e) {
             return response()->json([
@@ -184,5 +184,20 @@ class WarehouseTransferController extends Controller
             ], 500);
         }
     }
-     
+
+    public function updateWarehouseTransfer(Request $request){
+        $data = $request->all(); // Esto obtiene todo el body enviado
+        try {
+            $transfer = WarehouseTransfer::findOrFail($data['id']);
+            $transfer->update(["transfer_date" => $data['transfer_date']]);
+            $transfer->save();
+            return response()->json($data, 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while updating the transfer',
+                'error' => $e->getMessage(),
+                'stack' => $e->getTraceAsString()
+            ], 500);
+        }
+    }
 }

@@ -47,6 +47,7 @@ Route::get('/supplier/{supplier_id}/deliveries', [ProductBatchController::class,
 Route::get('product/sku/{sku}', [ProductController::class, 'getProductWithCategories']);
 Route::get('products/list-names', [ProductController::class, 'getProductNames']);
 Route::post('get_warehouse_transfer/{transferID}', [WarehouseTransferController::class,'getWarehouseTransfer']);
+Route::put('update_warehouse_transfer/', [WarehouseTransferController::class,'updateWarehouseTransfer']);
 
 // Product Images Routes
 Route::get('product/{product_id}/images', [ProductImageController::class, 'index']); // Listar imágenes de un producto
