@@ -91,4 +91,29 @@ class UserController extends Controller
             return response()->json(['message' => 'An error occurred while deleting the user', 'error' => $e->getMessage()], 500);
         }
     }
+
+    //mobile
+    public function getUserByFirebaseID($FBID) {
+        try {
+            $user = User::where('firebase_user_ID', $FBID)->first();
+            if (!$user) {
+                return response()->json(['message' => 'User not found'], 404);
+            }
+    
+            $transformedUser = [
+                "name" => $user->first_name . ' ' . $user->last_name,
+                "email" => $user->email,
+                "phone" => $user->phone,
+                "role" => $user->role,
+                "locationType" => $user->location_type,
+                "status" => $user->status,
+                "FBID" => $user->firebase_user_ID
+            ];
+    
+            return response()->json($transformedUser);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An error occurred while fetching the user', 'error' => $e->getMessage()], 500);
+        }
+    }
+    
 }

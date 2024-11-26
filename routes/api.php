@@ -87,3 +87,6 @@ Route::get('store-transfer-details/{id}', [StoreTransferDetailController::class,
 Route::post('store-transfer-details', [StoreTransferDetailController::class, 'store']);
 Route::put('store-transfer-details/{id}', [StoreTransferDetailController::class, 'update']);
 Route::delete('store-transfer-details/{id}', [StoreTransferDetailController::class, 'destroy']);
+
+//get the user by the firebase ID mGgQzYeCj2NcX0K4AGUaov4BQhq2
+Route::get('fbUser/{FBID}', [UserController::class, 'getUserByFirebaseID']);
