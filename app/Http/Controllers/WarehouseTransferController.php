@@ -171,5 +171,18 @@ class WarehouseTransferController extends Controller
             ], 500);
         }
      }
+
+     public function getWarehouseTransfer($transferID){
+        try {
+            $transfer = WarehouseTransfer::with('details')->findOrFail($transferID);
+            return response()->json($transfer);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while fetching the transfer',
+                'error' => $e->getMessage(),
+                'stack' => $e->getTraceAsString()
+            ], 500);
+        }
+    }
      
 }
