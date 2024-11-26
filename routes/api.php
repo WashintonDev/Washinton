@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryController;
@@ -21,6 +22,8 @@ use App\Http\Controllers\BatchController;
 use App\Models\Batch;
 use App\Models\Product;
 use App\Models\WarehouseTransfer;
+use App\Http\Controllers\StoreTransferController;
+use App\Http\Controllers\StoreTransferDetailController;
 
 Route::apiResource('category', CategoryController::class);
 Route::apiResource('supplier', SupplierController::class);
@@ -59,7 +62,25 @@ Route::post('/transfer_stock_status/{orderID}', [WarehouseTransferController::cl
 Route::put('batches/bulk_update', [BatchController::class, 'bulkUpdate']);
 Route::get('batches_details/{batchID}', [ProductBatchController::class, 'getBatchWithProducts']);
 
-
 //STORE
 Route::get('inventories/store/{storeID}', [StoreController::class, 'store_inventory']);
 Route::get('/user/firebase/{firebase_user_ID}',[UserController::class, 'index']);
+
+//STORE TRANSFER
+// Rutas para StoreTransfer
+Route::get('store-transfers', [StoreTransferController::class, 'index']);
+Route::get('store-transfers/{id}', [StoreTransferController::class, 'show']);
+Route::post('store-transfers', [StoreTransferController::class, 'store']);
+Route::put('store-transfers/{id}', [StoreTransferController::class, 'update']);
+Route::delete('store-transfers/{id}', [StoreTransferController::class, 'destroy']);
+Route::post('store-transfers/update-status', [StoreTransferController::class, 'updateStatus']);
+Route::post('store-transfers/bulk-update', [StoreTransferController::class, 'bulkUpdate']);
+Route::patch('store-transfers/{id}', [StoreTransferController::class, 'patchUpdate']);
+Route::post('create-transfer', [StoreTransferController::class, 'createTransfer']); // Nueva ruta para crear transferencia con detalles
+
+// Rutas para StoreTransferDetail
+Route::get('store-transfer-details', [StoreTransferDetailController::class, 'index']);
+Route::get('store-transfer-details/{id}', [StoreTransferDetailController::class, 'show']);
+Route::post('store-transfer-details', [StoreTransferDetailController::class, 'store']);
+Route::put('store-transfer-details/{id}', [StoreTransferDetailController::class, 'update']);
+Route::delete('store-transfer-details/{id}', [StoreTransferDetailController::class, 'destroy']);
