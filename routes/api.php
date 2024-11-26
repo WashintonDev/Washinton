@@ -18,6 +18,8 @@ use App\Http\Controllers\WarehouseTransferDetailController;
 use App\Http\Controllers\RestockRequestController;
 use App\Http\Controllers\RestockRequestDetailController;
 use App\Http\Controllers\BatchController;
+use App\Http\Controllers\StoreTransferController;
+use App\Http\Controllers\StoreTransferDetailController;
 use App\Models\Batch;
 use App\Models\Product;
 use App\Models\WarehouseTransfer;
