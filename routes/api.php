@@ -59,6 +59,7 @@ Route::post('/transfer_stock_status/{orderID}', [WarehouseTransferController::cl
 Route::put('batches/bulk_update', [BatchController::class, 'bulkUpdate']);
 Route::get('batches_details/{batchID}', [ProductBatchController::class, 'getBatchWithProducts']);
 
+
 //STORE
 Route::get('inventories/store/{storeID}', [StoreController::class, 'store_inventory']);
 Route::get('/user/firebase/{firebase_user_ID}',[UserController::class, 'index']);
