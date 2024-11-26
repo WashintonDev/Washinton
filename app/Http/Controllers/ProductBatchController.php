@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ProductBatch;
 use Illuminate\Http\Request;
+use App\Models\Batch;
 
 class ProductBatchController extends Controller
 {
@@ -74,4 +75,35 @@ public function store(Request $request)
 
         return response()->json($deliveries);
     }
+
+    public function getBatchWithProducts($batchID)
+    {
+        try {
+            $batch = Batch::where('code', $batchID)->first();
+            if (!$batch) {
+                return response()->json(['message' => 'Batch not found'], 404);
+            }
+    
+            $products = ProductBatch::where('batch_id', $batch->batch_id)->get();
+    
+            $transformedBatch = [
+                "batchID" => $batch->batch_id,
+                "code" => $batch->code,
+                "batchName" => $batch->batch_name,
+                "status" => $batch->status,
+                "requestedAt" => $batch->requested_at,
+                "products" => $products->map(function ($productBatch) {
+                    return [
+                        "name" => $productBatch->product->name,
+                        "quantity" => $productBatch->quantity,
+                    ];
+                })
+            ];
+    
+            return response()->json($transformedBatch);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+    
 }
