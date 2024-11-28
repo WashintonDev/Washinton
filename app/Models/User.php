@@ -12,7 +12,19 @@ class User extends Authenticatable // Cambia Model a Authenticatable
     
     protected $table = 'user';
     protected $primaryKey = 'user_id';
-    protected $fillable = ['first_name', 'last_name', 'email', 'password', 'phone', 'location_type', 'status', 'store_id', 'firebase_user_ID'];
+    protected $fillable = [
+        'first_name',
+        'last_name',
+        'email',
+        'password',
+        'phone',
+        'location_type',
+        'status',
+        'store_id',
+        'role_id', // Asegúrate de incluir role_id aquí
+        'firebase_user_ID',
+    ];
+    
 
     // Relación con tienda
     public function store()
