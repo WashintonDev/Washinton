@@ -27,7 +27,6 @@ class UserController extends Controller
                 'email' => 'nullable|string|email|max:120|unique:user',
                 'password' => 'required|string',
                 'phone' => 'nullable|string|size:10',
-                'role' => 'required|string|max:30',
                 'location_type' => 'required|string|max:20',
                 'status' => 'required|string|max:10',
                 'store_id' => 'nullable|exists:store,store_id',
@@ -64,7 +63,6 @@ class UserController extends Controller
                 'email' => 'nullable|string|email|max:120|unique:user,email,' . $id . ',user_id',
                 'password' => 'nullable|string',
                 'phone' => 'nullable|string|size:10',
-                'role' => 'required|string|max:30',
                 'location_type' => 'required|string|max:20',
                 'status' => 'required|string|max:10',
                 'store_id' => 'nullable|exists:store,store_id'
@@ -104,7 +102,6 @@ class UserController extends Controller
                 "name" => $user->first_name . ' ' . $user->last_name,
                 "email" => $user->email,
                 "phone" => $user->phone,
-                "role" => $user->role,
                 "locationType" => $user->location_type,
                 "status" => $user->status,
                 "FBID" => $user->firebase_user_ID

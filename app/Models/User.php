@@ -12,7 +12,7 @@ class User extends Authenticatable // Cambia Model a Authenticatable
     
     protected $table = 'user';
     protected $primaryKey = 'user_id';
-    protected $fillable = ['first_name', 'last_name', 'email', 'password', 'phone', 'role', 'location_type', 'status', 'store_id', 'firebase_user_ID'];
+    protected $fillable = ['first_name', 'last_name', 'email', 'password', 'phone', 'location_type', 'status', 'store_id', 'firebase_user_ID'];
 
     // Relación con tienda
     public function store()
@@ -24,9 +24,6 @@ class User extends Authenticatable // Cambia Model a Authenticatable
     protected $hidden = ['password'];
 
     // Añade esta relación al modelo User
-public function role()
-{
-    return $this->belongsTo(Role::class, 'role_id');
-}
+
 
 }

@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('password');
             $table->rememberToken();
             $table->char('phone', 10)->nullable();
-            $table->string('role', 30);
             $table->string('location_type', 20);
             $table->string('status', 10)->default('active');
             $table->unsignedBigInteger('store_id')->nullable();
