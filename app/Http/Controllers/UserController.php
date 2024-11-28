@@ -18,6 +18,16 @@ class UserController extends Controller
         }
     }
 
+    public function show($id)
+    {
+        try {
+            return User::findOrFail($id);
+        } catch (\Exception $e) {
+            Log::error('Error fetching user: ' . $e->getMessage(), ['stack' => $e->getTraceAsString()]);
+            return response()->json(['message' => 'An error occurred while fetching the user', 'error' => $e->getMessage()], 500);
+        }
+    }
+    
     public function store(Request $request)
 {
     try {
