@@ -30,12 +30,12 @@ class WarehouseTransferController extends Controller
                 $response = $transfers->map(function ($transfer) {
                     $transferArray = $transfer->toArray();
                     $transferArray['store'] = $transfer->store->name;
-                    $totalValue = $transfer->details->sum(function ($detail) { return $detail->product->price; });
+                    $totalValue = $transfer->details->sum(function ($detail) { return ($detail->product->price)*($detail->quantity); });
                     $transferArray['totalValue'] = $totalValue;
                     return $transferArray;
                 });
     
-                return response()->json($response);
+                return response()->json($response);//it was response
             } catch (\Exception $e) {
                 return response()->json(['message' => 'An error occurred while fetching transfers', 'error' => $e->getMessage()], 500);
             }
@@ -200,4 +200,60 @@ class WarehouseTransferController extends Controller
             ], 500);
         }
     }
+
+    public function cancelTransfer(Request $request) {
+        DB::beginTransaction(); 
+    
+        try {
+
+            $orderID = $request->input('orderID');
+            $reasons = $request->input('reasons');
+
+            $products = WarehouseTransferDetail::where('transfer_id', $orderID)->get();
+    
+            if ($products->isEmpty()) {
+                return response()->json(['message' => 'No products found for this transfer'], 404);
+            }
+    
+            // Loop through each product in the transfer
+            foreach ($products as $productOrder) {
+                // Fetch the warehouse inventory record
+                $warehouseInventory = Inventory::where('product_id', $productOrder->product_id)
+                    ->where('warehouse_id', 1) // Assuming warehouse_id = 1 is the default
+                    ->first();
+    
+                if (!$warehouseInventory) {
+                    return response()->json(['message' => "Inventory not found for product ID {$productOrder->product_id}"], 404);
+                }
+    
+                // Ensure there's enough reserved stock to move back to stock
+                if ($warehouseInventory->Reserved_Stock < $productOrder->quantity) {
+                    return response()->json(['message' => "Not enough reserved stock for product ID {$productOrder->product_id}"], 400);
+                }
+    
+                // Adjust the stock and reserved stock
+                $warehouseInventory->Reserved_Stock -= $productOrder->quantity;
+                $warehouseInventory->stock += $productOrder->quantity;
+                $warehouseInventory->save();
+            }
+    
+            // Update the transfer's status to 'Cancelled'
+            $transfer = WarehouseTransfer::findOrFail($orderID);
+            $transfer->status = 'Cancelled';
+            $transfer->reasons = $reasons;
+            $transfer->save();
+    
+            DB::commit(); // Commit the transaction
+            return response()->json(['message' => 'Transfer cancelled and stock updated successfully'], 200);
+    
+        } catch (\Exception $e) {
+            DB::rollBack(); // Rollback the transaction in case of error
+            return response()->json([
+                'message' => 'An error occurred while cancelling the transfer',
+                'error' => $e->getMessage(),
+                'stack' => $e->getTraceAsString()
+            ], 500);
+        }
+    }
+    
 }

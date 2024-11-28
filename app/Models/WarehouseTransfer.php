@@ -11,7 +11,7 @@ class WarehouseTransfer extends Model
 
     protected $table = 'warehouse_transfer';
     protected $primaryKey = 'transfer_id';
-    protected $fillable = ['store_id', 'transfer_date', 'status'];
+    protected $fillable = ['store_id', 'transfer_date', 'status','reasons'];
 
     // Relación con la tienda
     public function store()

@@ -15,49 +15,67 @@ class WarehouseTransferDetailController extends Controller
     }
 
     public function store(Request $request)
-    {
-        DB::beginTransaction(); // Start a transaction
-        try {
-            // Validate the request data
-            $validatedData = $request->validate([
-                'transfer_id' => 'required|exists:warehouse_transfer,transfer_id',
-                'product_id' => 'required|exists:product,product_id',
-                'quantity' => 'required|integer|min:1'
-            ]);
-    
-            $productId = $validatedData['product_id'];
-            $quantity = $validatedData['quantity'];
-    
-            // Find the inventory record for the product and store/warehouse
-            $inventory = Inventory::where('product_id', $productId)
-                ->where('store_id', $request->input('store_id')) // Assuming store_id is in the request
-                ->first();
-    
+{
+    DB::beginTransaction(); // Start a transaction
+
+    try {
+        // Validate the request data
+        $validatedData = $request->validate([
+            'transfer_id' => 'required|exists:warehouse_transfer,transfer_id',
+            'products' => 'required|array',
+            'products.*.product_id' => 'required|exists:product,product_id',
+            'products.*.quantity' => 'required|integer|min:1',
+        ]);
+
+        $transferId = $validatedData['transfer_id'];
+        $productDetails = $validatedData['products'];
+
+        // Loop through each product to validate and update inventory
+        $transferDetails = [];
+        foreach ($productDetails as $product) {
+            $inventory = Inventory::where('product_id', $product['product_id'])
+            ->whereNull('store_id') // Check if store_id is NULL
+            ->first();
+        
+
             if (!$inventory) {
-                return response()->json(['error' => 'Inventory record not found'], 404);
+                return response()->json([
+                    'error' => "Inventory record not found for product ID {$product['product_id']}",
+                ], 404);
             }
-    
+
             // Check if there's enough stock
-            if ($inventory->stock < $quantity) {
+            if ($inventory->stock < $product['quantity']) {
                 return response()->json(['error' => 'Insufficient stock'], 400);
             }
-    
+
             // Update stock and reserved stock
-            $inventory->stock -= $quantity;
-            $inventory->Reserved_Stock += $quantity;
+            $inventory->stock -= $product['quantity'];
+            $inventory->Reserved_Stock += $product['quantity'];
             $inventory->save();
-    
-            // Create the transfer detail
-            $transferDetail = WarehouseTransferDetail::create($validatedData);
-    
-            DB::commit(); // Commit the transaction
-    
-            return response()->json($transferDetail, 201);
-        } catch (\Exception $e) {
-            DB::rollBack(); // Rollback the transaction in case of error
-            return response()->json(['error' => $e->getMessage()], 500);
+
+            // Prepare data for transfer details
+            $transferDetails[] = [
+                'transfer_id' => $transferId,
+                'product_id' => $product['product_id'],
+                'quantity' => $product['quantity'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
         }
+
+        // Bulk insert transfer details
+        WarehouseTransferDetail::insert($transferDetails);
+
+        DB::commit(); // Commit the transaction
+
+        return response()->json(['message' => 'Products transferred successfully'], 201);
+    } catch (\Exception $e) {
+        DB::rollBack(); // Rollback the transaction in case of error
+        return response()->json(['error' => $e->getMessage()], 500);
     }
+}
+
 
     public function show($id)
     {
