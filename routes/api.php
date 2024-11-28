@@ -23,6 +23,8 @@ use App\Http\Controllers\StoreTransferDetailController;
 use App\Models\Batch;
 use App\Models\Product;
 use App\Models\WarehouseTransfer;
+use App\Http\Controllers\RoleController;
+
 
 Route::apiResource('category', CategoryController::class);
 Route::apiResource('supplier', SupplierController::class);
@@ -30,6 +32,7 @@ Route::apiResource('product', ProductController::class);
 Route::apiResource('warehouse', WarehouseController::class);
 Route::apiResource('store', StoreController::class);
 Route::apiResource('user', UserController::class);
+Route::apiResource('roles', RoleController::class);
 Route::apiResource('inventory', InventoryController::class);
 Route::apiResource('batch', BatchController::class);
 Route::apiResource('product_batch', ProductBatchController::class);

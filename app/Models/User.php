@@ -9,7 +9,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable // Cambia Model a Authenticatable
 {
     use HasFactory, HasApiTokens; // Añade HasApiTokens
-
+    
     protected $table = 'user';
     protected $primaryKey = 'user_id';
     protected $fillable = ['first_name', 'last_name', 'email', 'password', 'phone', 'role', 'location_type', 'status', 'store_id', 'firebase_user_ID'];
@@ -22,4 +22,11 @@ class User extends Authenticatable // Cambia Model a Authenticatable
 
     // Opcional: ocultar el campo de contraseña
     protected $hidden = ['password'];
+
+    // Añade esta relación al modelo User
+public function role()
+{
+    return $this->belongsTo(Role::class, 'role_id');
+}
+
 }
