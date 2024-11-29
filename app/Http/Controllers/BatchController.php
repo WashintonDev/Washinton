@@ -197,5 +197,24 @@ class BatchController extends Controller
     
         return response()->json(['message' => 'Batch status updated and stock adjusted successfully'], 200);
     }
-    
+    public function updateStatusInProcessCancelled(Request $request)
+    {
+        $validatedData = $request->validate([
+            'code' => 'required|string',
+            'status' => 'required|string|in:in_process,cancelled',
+            'reasons' => 'required|string',
+        ]);
+
+        $batch = Batch::where('code', $validatedData['code'])->first();
+
+        if (!$batch) {
+            return response()->json(['message' => 'Batch not found'], 404);
+        }
+
+        // Actualizar el estado de la batch
+        $batch->status = $validatedData['status'];
+        $batch->save();
+
+        return response()->json(['message' => 'Batch status updated and stock adjusted successfully'], 200);
+    }
 }
