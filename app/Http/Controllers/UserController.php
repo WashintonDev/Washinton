@@ -107,14 +107,19 @@ public function update(Request $request, $id)
     public function getUserByFirebaseID($FBID) {
         try {
             $user = User::where('firebase_user_ID', $FBID)->first();
+    
             if (!$user) {
                 return response()->json(['message' => 'User not found'], 404);
             }
+    
+            // Cargar la relación 'role' para obtener los detalles del rol
+            $role = $user->role ? $user->role->name : null; // Asegúrate de que 'role' tiene un nombre en la tabla 'roles'
     
             $transformedUser = [
                 "name" => $user->first_name . ' ' . $user->last_name,
                 "email" => $user->email,
                 "phone" => $user->phone,
+                "role" => $role, // Ahora incluye el nombre del rol
                 "locationType" => $user->location_type,
                 "status" => $user->status,
                 "FBID" => $user->firebase_user_ID
