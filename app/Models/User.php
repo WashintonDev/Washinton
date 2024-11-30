@@ -35,7 +35,10 @@ class User extends Authenticatable // Cambia Model a Authenticatable
     // Opcional: ocultar el campo de contraseña
     protected $hidden = ['password'];
 
-    // Añade esta relación al modelo User
-
+    // Añade esta relación al modelo User  puesta para tratar de solucionar login 
+public function role()
+{
+    return $this->belongsTo(Role::class, 'role_id');
+}
 
 }

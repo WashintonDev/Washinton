@@ -73,7 +73,7 @@ Route::get('batches_details/{batchID}', [ProductBatchController::class, 'getBatc
 
 //STORE
 Route::get('inventories/store/{storeID}', [StoreController::class, 'store_inventory']);
-Route::get('/user/firebase/{firebase_user_ID}',[UserController::class, 'index']);
+Route::get('/user/firebase/{firebaseId}', [UserController::class, 'getUserByFirebaseId']);
 //STORE TRANSFER
 // Rutas para StoreTransfer
 Route::get('store-transfers', [StoreTransferController::class, 'index']);
