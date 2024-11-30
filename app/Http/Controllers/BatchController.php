@@ -132,15 +132,30 @@ class BatchController extends Controller
                 'batches' => 'required|array',
                 'batches.*.batch_id' => 'required|exists:batch,batch_id',
                 'batches.*.status' => 'nullable|string|max:20',
+                'batches.*.reasons' => 'nullable|string|max:255',
             ]);
+    
+            // Validar reglas adicionales para cada batch manualmente
+            foreach ($data['batches'] as $batch) {
+                if (in_array($batch['status'], ['in_process', 'cancelled']) && empty($batch['reasons'])) {
+                    return response()->json([
+                        'error' => "The 'reasons' field is required for status '{$batch['status']}'",
+                        'batch_id' => $batch['batch_id']
+                    ], 422);
+                }
+            }
     
             DB::beginTransaction();
     
             foreach ($data['batches'] as $batchData) {
                 $batch = Batch::where('batch_id', $batchData['batch_id'])->firstOrFail();
-                $batch->update($batchData);
     
-                if ($batchData['status'] === 'received') {
+                // Actualizar el batch, incluyendo el campo 'reasons' si está presente
+                $batch->fill($batchData);
+                $batch->save();
+    
+                // Ajustar inventarios si el estado es 'received'
+                if (isset($batchData['status']) && $batchData['status'] === 'received') {
                     $productsInBatch = ProductBatch::where('batch_id', $batch->batch_id)->get();
     
                     foreach ($productsInBatch as $productBatch) {
@@ -170,6 +185,7 @@ class BatchController extends Controller
             'batch_name' => 'sometimes|string|max:100',
             'status' => 'sometimes|string|max:20',
             'requested_at' => 'sometimes|date',
+            'reasons' => 'required_if:status,in_process,cancelled|string|max:255',
         ]);
     
         $batch = Batch::find($id);
@@ -178,9 +194,12 @@ class BatchController extends Controller
             return response()->json(['message' => 'Batch not found'], 404);
         }
     
-        $batch->update($validatedData);
+        foreach ($validatedData as $key => $value) {
+            $batch->{$key} = $value;
+        }
+        $batch->save();
     
-        if ($validatedData['status'] === 'received') {
+        if (isset($validatedData['status']) && $validatedData['status'] === 'received') {
             $productsInBatch = ProductBatch::where('batch_id', $batch->batch_id)->get();
     
             foreach ($productsInBatch as $productBatch) {
@@ -195,26 +214,9 @@ class BatchController extends Controller
             }
         }
     
-        return response()->json(['message' => 'Batch status updated and stock adjusted successfully'], 200);
-    }
-    public function updateStatusInProcessCancelled(Request $request)
-    {
-        $validatedData = $request->validate([
-            'code' => 'required|string',
-            'status' => 'required|string|in:in_process,cancelled',
-            'reasons' => 'required|string',
-        ]);
-
-        $batch = Batch::where('code', $validatedData['code'])->first();
-
-        if (!$batch) {
-            return response()->json(['message' => 'Batch not found'], 404);
-        }
-
-        // Actualizar el estado de la batch
-        $batch->status = $validatedData['status'];
-        $batch->save();
-
-        return response()->json(['message' => 'Batch status updated and stock adjusted successfully'], 200);
+        return response()->json([
+            'message' => 'Batch status updated successfully',
+            'data' => $batch,
+        ], 200);
     }
 }

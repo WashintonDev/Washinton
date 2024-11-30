@@ -11,7 +11,7 @@ class Batch extends Model
 
     protected $table = 'batch';
     protected $primaryKey = 'batch_id';
-    protected $fillable = ['code', 'batch_name', 'status', 'requested_at'];
+    protected $fillable = ['code', 'batch_name', 'status','requested_at','reasons'];
 
     // Método para obtener los productos relacionados
     public function products()
