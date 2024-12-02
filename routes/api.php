@@ -34,6 +34,7 @@ Route::apiResource('store', StoreController::class);
 Route::apiResource('user', UserController::class);
 Route::apiResource('roles', RoleController::class);
 Route::apiResource('inventory', InventoryController::class);
+Route::patch('/inventory/update/{id}', [InventoryController::class, 'updateInventory']);
 Route::apiResource('batch', BatchController::class);
 Route::apiResource('product_batch', ProductBatchController::class);
 Route::apiResource('product_supplier', ProductSupplierController::class);
