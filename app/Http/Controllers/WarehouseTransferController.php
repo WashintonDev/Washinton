@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class WarehouseTransferController extends Controller
 {
+
+//composer require kreait/firebase-php  
         public function index()
         {
             try {
@@ -50,7 +52,21 @@ class WarehouseTransferController extends Controller
                 'status' => 'required|string|max:10'
             ]);
 
-            return WarehouseTransfer::create($validatedData);
+            // Create the order
+            $warehouseTransfer = WarehouseTransfer::create($validatedData);
+
+             //get the deitals
+         $transfer = WarehouseTransfer::with(['store', 'details.product'])->findOrFail($warehouseTransfer->transfer_id); 
+
+         // Hide the created_at and updated_at fields 
+         $transfer->makeHidden(['created_at', 'updated_at']); 
+         $transfer->store->makeHidden(['created_at', 'updated_at', 'phone', 'address', 'status', 'city', 'state']); 
+         foreach ($transfer->details as $detail) { $detail->makeHidden(['created_at', 'updated_at']); 
+             $detail->product->makeHidden(['created_at', 'updated_at', 'sku', 'brand', 'description', 'status', 'image', 'category_id', 'supplier_id', 'type', 'volume', 'unit']); 
+         } 
+
+
+            return response()->json($warehouseTransfer); 
         }catch(Exception $e){
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -255,5 +271,101 @@ class WarehouseTransferController extends Controller
             ], 500);
         }
     }
+
+    public function approvingOrders() {
+        try {
+            $transfers = WarehouseTransfer::where('status', 'Confirming')->with(['store', 'details.product'])->get();//change the status to approving leter on
+
+            // Hide the created_at and updated_at fields and customize the response
+            $transfers->each(function ($transfer) {
+                $transfer->makeHidden(['created_at', 'updated_at']);
+                $transfer->store->makeHidden(['created_at', 'updated_at', 'phone', 'address', 'status', 'city', 'state']);
+                foreach ($transfer->details as $detail) {
+                    $detail->makeHidden(['created_at', 'updated_at']);
+                    $detail->product->makeHidden(['created_at', 'updated_at', 'sku', 'brand', 'description', 'status', 'image', 'category_id', 'supplier_id', 'type', 'volume', 'unit']);
+                }
+            });
+
+            // Customize the response to include only the store name
+            $response = $transfers->map(function ($transfer) {
+                $transferArray = $transfer->toArray();
+                $transferArray['store'] = $transfer->store->name;
+                $totalValue = $transfer->details->sum(function ($detail) { return ($detail->product->price)*($detail->quantity); });
+                $transferArray['totalValue'] = $totalValue;
+                return $transferArray;
+            });
+
+            return response()->json($response);//it was response
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An error occurred while fetching transfers', 'error' => $e->getMessage()], 500);
+        }
+    }
     
+    public function rejectTransfer($orderID) {
+        DB::beginTransaction(); 
+    
+        try {
+
+
+            $products = WarehouseTransferDetail::where('transfer_id', $orderID)->get();
+    
+            if ($products->isEmpty()) {
+                return response()->json(['message' => 'No products found for this transfer'], 404);
+            }
+    
+            // Loop through each product in the transfer
+            foreach ($products as $productOrder) {
+                // Fetch the warehouse inventory record
+                $warehouseInventory = Inventory::where('product_id', $productOrder->product_id)
+                    ->where('warehouse_id', 1) // Assuming warehouse_id = 1 is the default
+                    ->first();
+    
+                if (!$warehouseInventory) {
+                    return response()->json(['message' => "Inventory not found for product ID {$productOrder->product_id}"], 404);
+                }
+    
+                // Ensure there's enough reserved stock to move back to stock
+                if ($warehouseInventory->Reserved_Stock < $productOrder->quantity) {
+                    return response()->json(['message' => "Not enough reserved stock for product ID {$productOrder->product_id}"], 400);
+                }
+    
+                // Adjust the stock and reserved stock
+                $warehouseInventory->Reserved_Stock -= $productOrder->quantity;
+                $warehouseInventory->stock += $productOrder->quantity;
+                $warehouseInventory->save();
+            }
+    
+            // Update the transfer's status to 'Cancelled'
+            $transfer = WarehouseTransfer::findOrFail($orderID);
+            $transfer->status = 'Rejected';
+            $transfer->save();
+    
+            DB::commit(); // Commit the transaction
+            return response()->json(['message' => 'Order Rejected Successfully'], 200);
+    
+        } catch (\Exception $e) {
+            DB::rollBack(); // Rollback the transaction in case of error
+            return response()->json([
+                'message' => 'An error occurred while cancelling the transfer',
+                'error' => $e->getMessage(),
+                'stack' => $e->getTraceAsString()
+            ], 500);
+        }
+    }
+
+    public function allowOrder($orderID){
+        try {
+            WarehouseTransfer::where('transfer_id', $orderID)->update(['status' => 'Preparing']);
+    
+            return response()->json(['message'=>'Approved Order Successfully']);
+    
+            } catch (\Exception $e) {
+    
+                return response()->json([
+                    'message' => 'An error occurred while updating status',
+                    'error' => $e->getMessage(),
+                    'stack' => $e->getTraceAsString()
+                ], 500);
+            }
+    }
 }

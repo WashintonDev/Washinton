@@ -95,3 +95,10 @@ Route::delete('store-transfer-details/{id}', [StoreTransferDetailController::cla
 
 //get the user by the firebase ID mGgQzYeCj2NcX0K4AGUaov4BQhq2
 Route::get('fbUser/{FBID}', [UserController::class, 'getUserByFirebaseID']);
+
+
+//for the wearable
+Route::get('/wearable/orders', [WarehouseTransferController::class, 'approvingOrders']);
+Route::post('/wearable/reject/{orderID}', [WarehouseTransferController::class, 'rejectTransfer']);
+Route::post('/wearable/approve/{orderID}', [WarehouseTransferController::class, 'allowOrder']);
+Route::post('/wearable/notify-app', [WarehouseTransferDetailController::class, 'notifyApproval']);
