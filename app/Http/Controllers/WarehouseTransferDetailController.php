@@ -154,7 +154,7 @@ class WarehouseTransferDetailController extends Controller
             $firebaseService->sendToTopic(
                 "notify_Approval", // Topic name
                 "Order $request->orderID has been $request->type",
-                'An order has been approved, click on the notification to check it out',
+                'An order has been approved, open the app and check it out!',
                 ['orderID' => $request->orderID] 
             );
         } catch (\Exception $e) {

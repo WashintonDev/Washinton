@@ -274,7 +274,7 @@ class WarehouseTransferController extends Controller
 
     public function approvingOrders() {
         try {
-            $transfers = WarehouseTransfer::where('status', 'Confirming')->with(['store', 'details.product'])->get();//change the status to approving leter on
+            $transfers = WarehouseTransfer::where('status', 'Approving')->with(['store', 'details.product'])->get();//change the status to approving leter on
 
             // Hide the created_at and updated_at fields and customize the response
             $transfers->each(function ($transfer) {
