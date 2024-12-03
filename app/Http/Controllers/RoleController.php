@@ -79,65 +79,6 @@ class RoleController extends Controller
             return response()->json(['message' => 'An error occurred while deleting the role', 'error' => $e->getMessage()], 500);
         }
     }
-
-    /// implementar la asignación de roles a usuarios  --------- cambios de Rafael 
-
-
-    public function assignRoleToUser(Request $request, $userId)
-{
-    try {
-        $validatedData = $request->validate([
-            'role_id' => 'required|integer|exists:roles,id',  
-        ]);
-
-        // Buscar al usuario por su ID
-        $user = User::findOrFail($userId);
-
-        // Asignar el rol utilizando el role_id
-        $user->role_id = $validatedData['role_id'];  // Asignar el role_id al usuario
-        $user->save();  // Guardar cambios
-
-        return response()->json(['message' => 'Rol asignado correctamente', 'user' => $user]);
-    } catch (\Exception $e) {
-        // Si ocurre un error, lo logueamos y respondemos con un mensaje de error
-        Log::error('Error al asignar el rol al usuario: ' . $e->getMessage());
-        return response()->json(['message' => 'Error interno del servidor', 'error' => $e->getMessage()], 500);
-    }
-}
-
-//mobile
-public function getUserByFirebaseID($FBID) {
-    try {
-        $user = User::where('firebase_user_ID', $FBID)->first();
-
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
-
-        // Cargar la relación 'role' para obtener los detalles del rol
-        $role = $user->role ? $user->role->name : null; // Asegúrate de que 'role' tiene un nombre en la tabla 'roles'
-
-        $transformedUser = [
-            "name" => $user->first_name . ' ' . $user->last_name,
-            "email" => $user->email,
-            "phone" => $user->phone,
-            "role" => $role, // Ahora incluye el nombre del rol
-            "locationType" => $user->location_type,
-            "status" => $user->status,
-            "FBID" => $user->firebase_user_ID
-        ];
-
-        return response()->json($transformedUser);
-    } catch (\Exception $e) {
-        return response()->json(['message' => 'An error occurred while fetching the user', 'error' => $e->getMessage()], 500);
-    }
-}
-
-
-
-    
-
-    
 }
 
 

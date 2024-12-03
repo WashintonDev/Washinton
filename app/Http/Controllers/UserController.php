@@ -13,7 +13,8 @@ class UserController extends Controller
     public function index()
     {
         try {
-            return User::all();
+            $users = User::with('role')->get();
+            return response()->json($users); 
         } catch (\Exception $e) {
             Log::error('Error fetching users: ' . $e->getMessage(), ['stack' => $e->getTraceAsString()]);
             return response()->json(['message' => 'An error occurred while fetching users', 'error' => $e->getMessage()], 500);
@@ -23,7 +24,7 @@ class UserController extends Controller
     public function show($id)
 {
     try {
-        $user = User::with('role')->findOrFail($id); // Trae los datos del usuario y su rol
+        $user = User::with('role')->findOrFail($id); // Trae los datos del usuario y su rol cambio para poder ver los roles en los usuarios de la api 
         return response()->json($user);
     } catch (\Exception $e) {
         Log::error('Error fetching user: ' . $e->getMessage(), ['stack' => $e->getTraceAsString()]);
@@ -135,25 +136,34 @@ public function update(Request $request, $id)
         }
     }
 
-    public function assignRole(Request $request, User $user)
+    public function updateRole(Request $request, $userId)
 {
-    // Validar que el rol se haya proporcionado
-    $request->validate([
-        'role_id' => 'required|exists:roles,id',
+  
+    $validatedData = $request->validate([
+        'role_id' => 'required|exists:roles,role_id',
     ]);
 
-    // Obtener el rol que se va a asignar
-    $role = Role::find($request->role_id);
+    try {
+        $user = User::findOrFail($userId);
 
-    // Asignar el rol al usuario
-    $user->role()->associate($role);
-    $user->save();
+        
+        $user->role_id = $validatedData['role_id'];
+        $user->save();
 
-    // Responder con éxito
-    return response()->json(['message' => 'Rol asignado correctamente'], Response::HTTP_OK);
+        return response()->json([
+            'message' => 'Rol actualizado correctamente',
+            'user' => $user,
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error al actualizar el rol del usuario: ' . $e->getMessage());
+        return response()->json([
+            'message' => 'Hubo un error al actualizar el rol',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
 }
-
  
     
 }
+
 
