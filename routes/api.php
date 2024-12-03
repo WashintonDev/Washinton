@@ -102,3 +102,6 @@ Route::get('/wearable/orders', [WarehouseTransferController::class, 'approvingOr
 Route::post('/wearable/reject/{orderID}', [WarehouseTransferController::class, 'rejectTransfer']);
 Route::post('/wearable/approve/{orderID}', [WarehouseTransferController::class, 'allowOrder']);
 Route::post('/wearable/notify-app', [WarehouseTransferDetailController::class, 'notifyApproval']);
+
+// for role  Update the role of a user
+Route::patch('user/{user_id}/role', [UserController::class, 'updateRole']);
